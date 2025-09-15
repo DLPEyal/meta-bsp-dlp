@@ -41,14 +41,14 @@ setup()
 machine_type()
 {
         export MACHINE=$M_MACHINE
-	DISTRO=fsl-imx-wayland MACHINE=${MACHINE} source decoder-setup-release.sh
+	DISTRO=fsl-imx-wayland MACHINE=${MACHINE} source dlp-setup-release.sh
 }
 
 #define qemu type
 qemu_type()
 {
         export MACHINE=$QEMU_MACHINE
-	DISTRO=fsl-imx-wayland MACHINE=${MACHINE} source decoder-setup-release.sh
+	DISTRO=fsl-imx-wayland MACHINE=${MACHINE} source dlp-setup-release.sh
 }
 
 sanity_fix()
@@ -68,7 +68,7 @@ sanity_fix()
 	else
 		echo "The line '$line' does not exist in the file."
 	fi
-	cp sources/meta-bsp-decoder/recipes-kernel/linux/files/* sources/meta-imx/meta-bsp/recipes-kernel/linux/files/
+	cp sources/meta-bsp-dlp/recipes-kernel/linux/files/* sources/meta-imx/meta-bsp/recipes-kernel/linux/files/
 }
 
 sshd_fix()
@@ -96,7 +96,7 @@ echo "BSPDIR has been updated in bblayers.conf.org"
 	
 }
 add_new_layer() {
-	cp sources/meta-bsp-decoder/bblayers.confpre conf/bblayers.conf.org
+	cp sources/meta-bsp-dlp/bblayers.confpre conf/bblayers.conf.org
 }
 
 #build image for machine
@@ -145,7 +145,7 @@ build_sdk()
 flash_to_emmc()
 {
 	pushd .
-	cp sources/meta-bsp-decoder/uuu sources/meta-bsp-decoder/uuu build/tmp/deploy/images/imx8mpevk/
+	cp sources/meta-bsp-dlp/uuu sources/meta-bsp-dlp/uuu build/tmp/deploy/images/imx8mpevk/
 	cd build/tmp/deploy/images/imx8mpevk/
 	sudo ./uuu -b emmc_all imx-boot core-image-minimal-imx8mpevk.wic.zst
 	popd

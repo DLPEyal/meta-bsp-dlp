@@ -1,0 +1,46 @@
+From 98dc4d80ca6bf3f4da8beb2af0780e7ef0a9d550 Mon Sep 17 00:00:00 2001
+From: Orel Eliyahu <orel_e@eyal-emi.co.il>
+Date: Sun, 6 Jul 2025 17:06:26 +0300
+Subject: [PATCH] add ERASE_STS_OUT GPIO
+
+---
+ arch/arm64/boot/dts/freescale/gpio_named.h | 6 +++---
+ oe-logs                                    | 2 +-
+ oe-workdir                                 | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/gpio_named.h b/arch/arm64/boot/dts/freescale/gpio_named.h
+index da37dd86e5dc..d5155ea79115 100644
+--- a/arch/arm64/boot/dts/freescale/gpio_named.h
++++ b/arch/arm64/boot/dts/freescale/gpio_named.h
+@@ -4,9 +4,9 @@
+         platform-unique;
+         status = "okay";
+         pin_numbers = <13 12 11 15 4 37 10 9 8 1 14 35 36 34 46 39 40 45 32 33 47>;
+-        pin_names = "PROG", "DONE", "INIT","FPGA_LOAD_LOCK","LAN7800_RESET","ARM BUTTOM","PROG_EN_IN","LOADER_DETECT","INT_REBOOT","SRAM_LOCK","OTP_LOCK","LED0","LED1","LED2","GPIO0","GPIO1","GPIO2","GPIO3","GPIO4","GPIO5","BASE_DETECT";
+-        pin_states = < GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW>;
+-        pin_init_val = < 0 1 1 0 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1>;  
++        pin_names = "PROG", "DONE", "INIT","FPGA_LOAD_LOCK","LAN7800_RESET","ARM BUTTOM","PROG_EN_IN","LOADER_DETECT","INT_REBOOT","SRAM_LOCK","OTP_LOCK","LED0","LED1","LED2","GPIO0","GPIO1","GPIO2","GPIO3","GPIO4","GPIO5","BASE_DETECT","ERASE_STS_OUT";
++        pin_states = < GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN>;
++        pin_init_val = < 0 1 1 0 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 0>;  
+         
+         interrupt-gpios = <&gpio2 17 IRQ_TYPE_EDGE_RISING>;
+        
+diff --git a/oe-logs b/oe-logs
+index ff878802cdb2..348c84a86776 120000
+--- a/oe-logs
++++ b/oe-logs
+@@ -1 +1 @@
+-/media/superuser/GlobalStorage/Projects/3043-50/users/orel_e/decoder_pcb_yocto/build/tmp/work/base-poky-linux/linux-imx/5.15.71+git999-r0/temp
+\ No newline at end of file
++/media/superuser/GlobalStorage/Projects/3043-50/users/orel_e/dlp_pcb_yocto/build/tmp/work/dlp-poky-linux/linux-imx/5.15.71+git999-r0/temp
+\ No newline at end of file
+diff --git a/oe-workdir b/oe-workdir
+index a3da44015eed..b3f97b232fa2 120000
+--- a/oe-workdir
++++ b/oe-workdir
+@@ -1 +1 @@
+-/media/superuser/GlobalStorage/Projects/3043-50/users/orel_e/decoder_pcb_yocto/build/tmp/work/base-poky-linux/linux-imx/5.15.71+git999-r0
+\ No newline at end of file
++/media/superuser/GlobalStorage/Projects/3043-50/users/orel_e/dlp_pcb_yocto/build/tmp/work/dlp-poky-linux/linux-imx/5.15.71+git999-r0
+\ No newline at end of file

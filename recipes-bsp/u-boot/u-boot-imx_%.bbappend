@@ -8,6 +8,7 @@ SRC_URI += "file://0001-update-read-status-register.patch \
             file://0001-Support-Base-SPL-UBoot.patch \
             file://0001-add-support-of-marvell-1512.patch \
             file://0001-merge-and-update-u-boot-spl-to-support-full-DLP.patch \
+            file://0001-add-phy-delay-reset.patch \
             "
 
 SRC_URI += "file://defconfig.cfg"
