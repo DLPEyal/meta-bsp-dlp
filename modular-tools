@@ -133,7 +133,8 @@ rebuild_image_evb()
 
 rebuild_image_pcb()
 {
-        bitbake -k core-image-minimal
+	export PATH=/usr/bin:$PATH
+        bitbake -k core-image-base
 }
 
 build_sdk()

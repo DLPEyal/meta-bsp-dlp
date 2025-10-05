@@ -26,6 +26,7 @@ SRC_URI += "file://0001-removed-promisc-check-on-eth1.patch \
             file://0019-update-GPIOs-Finish-Drop3.patch \
             file://0020-add-ERASE_STS_OUT-GPIO.patch \
 	    file://0021-Add-i2c4-and-create-a-seperate-gpio-named.patch \
+	    file://0022-Separate-DTS-files-GPIO-fixes-Driver-update.patch \
             file://defconfig.cfg"
 
 
