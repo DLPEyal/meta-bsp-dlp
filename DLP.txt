@@ -1,0 +1,82 @@
+
+# Step 1: Read GPIO2 Pad Status Register
+FB: ucmd setexpr r *0x30210008
+
+# Step 2: Extract GPIO44 (bit 12)
+FB: ucmd setexpr b0 $r \& 0x1000
+FB: ucmd setexpr b0 $b0 / 0x1000
+
+# Step 3: Extract GPIO48 (bit 16)
+FB: ucmd setexpr b1 $r \& 0x10000
+FB: ucmd setexpr b1 $b1 / 0x10000
+
+# Step 4: Compute armid = (b1 << 1) | b0
+FB: ucmd setexpr id $b1 \* 2
+FB: ucmd setexpr armid $id + $b0
+FB: ucmd setenv armid $armid
+FB: ucmd echo ARMID=$armid
+
+FB: ucmd setexpr r *0x30210008
+FB: ucmd setexpr b0 $r \& 0x1000
+FB: ucmd setexpr b0 $b0 / 0x1000
+FB: ucmd setexpr b1 $r \& 0x10000
+FB: ucmd setexpr b1 $b1 / 0x10000
+FB: ucmd setexpr id $b1 \* 2
+FB: ucmd setexpr armid $id + $b0
+FB: ucmd setenv armid $armid
+FB: ucmd echo ARMID=$armid
+
+# Set the start address & erase MTP memory
+FB: ucmd sf probe 2 85000000 0
+#FB[-t 1000000]: ucmd sf erase 0x0 0x8000000
+
+# Load Device Tree (DTB) to DDR at 0x40300000
+
+FB: ucmd setenv fastboot_buffer 0x40300000
+FB: ucmd setenv fastboot_buffer_decoder 0x40300000
+FB: download -f decoder.dtb
+FB: ucmd setenv dtb_size_decoder ${filesize}
+FB: ucmd setenv fastboot_buffer_base_arm1 0x40310000
+FB: ucmd setenv fastboot_buffer 0x40310000
+FB: download -f basearm1.dtb
+FB: ucmd setenv dtb_size_base_arm1 ${filesize}
+FB: ucmd setenv fastboot_buffer_base_arm2 0x40320000
+FB: ucmd setenv fastboot_buffer 0x40320000
+FB: download -f basearm2.dtb
+FB: ucmd setenv dtb_size_base_arm2 ${filesize}
+
+FB[-t 100000]:  ucmd if test $armid = 3; then sf update ${fastboot_buffer_decoder} 0x0 ${dtb_size_decoder}; setenv dtb_size ${dtb_size_decoder}; echo "Decoder DTB"; else echo "armid is not 3, skipping Decoder DTB"; fi
+FB[-t 100000]:  ucmd if test $armid = 2; then sf update ${fastboot_buffer_base_arm2} 0x0 ${dtb_size_base_arm2};setenv dtb_size ${dtb_size_base_arm2}; echo "Base ARM#2 DTB"; else echo "armid is not 2, skipping Base Arm#1 DTB"; fi
+FB[-t 100000]:  ucmd if test $armid = 1; then sf update ${fastboot_buffer_base_arm1} 0x0 ${dtb_size_base_arm1}; setenv dtb_size ${dtb_size_base_arm1}; echo "Base ARM#1 DTB"; else echo "armid is not 1, skipping Base Arm#2 DTB"; fi
+
+FB: ucmd echo DTB loaded to DDR at 0x40300000
+
+# Load Kernel to DDR at 0x40400000
+FB: ucmd setenv fastboot_buffer 0x40400000
+FB: download -f Image
+FB: ucmd setenv kernel_size ${filesize}
+FB[-t 100000]: ucmd sf update ${fastboot_buffer} 0x20000 ${filesize}
+FB: ucmd echo Kernel loaded to DDR at 0x40400000
+
+# Load Initramfs to DDR at 0x43000000
+FB: ucmd setenv fastboot_buffer 0x43000000
+FB: download -f core-image-base-dlp.cpio.gz
+FB: ucmd setenv initramfs_size ${filesize}
+FB[-t 1000000]: ucmd sf update ${fastboot_buffer} 0x3020000 ${filesize}
+FB: ucmd echo Initramfs loaded to DDR at 0x43000000
+
+#Set Prog_En testing
+FB: ucmd setenv prog_en_test 'setexpr r *0x30200008; if test ${armid} = 3; then setexpr b0 $r \\\& 0x400; setexpr b0 $b0 / 0x400; else setexpr b0 $r \\\& 0x200; setexpr b0 $b0 / 0x200; fi; echo ID ARM#${armid} PROG_EN=$b0; if test $b0 = 0; then echo Locking;sf probe 2 85000000 0; sf protect lock 0 0; else echo Not locking; fi'
+
+# Set boot arguments
+FB: ucmd setenv bootargs "console=ttymxc1,115200 root=/dev/ram0 rdinit=/sbin/init"
+FB: ucmd setenv bootcmd 'sf probe 2 85000000 0; sf read 0x40300000 0x0 ${dtb_size}; echo DTB read to DDR at 0x40300000; sf read 0x40400000 0x20000 ${kernel_size}; echo Kernel read to DDR at 0x40400000; sf read 0x43000000 0x3020000 ${initramfs_size}; echo Initramfs read to DDR at 0x43000000;run prog_en_test; booti 0x40400000 0x43000000:${initramfs_size} 0x40300000'
+#FB: ucmd booti 0x40400000 0x43000000:${initramfs_size} 0x40300000
+
+FB: ucmd saveenv
+#FB: ucmd saveenv
+#FB: ucmd printenv dtb_size
+#FB: ucmd printenv kernel_size
+#FB: ucmd printenv initramfs_size
+# Done
+FB: done

@@ -1,0 +1,24 @@
+From 6597e9f89e44dd7b46670da86ce0ebb033434e5c Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Mon, 20 Oct 2025 11:18:21 +0300
+Subject: [PATCH] RGMII_RST change
+
+---
+ arch/arm64/boot/dts/freescale/decoder_gpio_named.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/decoder_gpio_named.h b/arch/arm64/boot/dts/freescale/decoder_gpio_named.h
+index 82674bbe7392..992d531dfff6 100755
+--- a/arch/arm64/boot/dts/freescale/decoder_gpio_named.h
++++ b/arch/arm64/boot/dts/freescale/decoder_gpio_named.h
+@@ -4,8 +4,8 @@
+         platform-unique;
+         status = "okay";
+ pin_numbers = <0 1 4 8 9 10 11 12 13 14 15 32 33 34 35 36 37 39 40 45 46 47>;
+-pin_names = "ERASE_STS_OUT","SRAM_LOCK","LAN7800_RESET","INT_REBOOT","LOADER_DETECT","PROG_EN_IN","FPGA_INIT_B","FPGA_DONE","FPGA_PROG","OTP_LOCK","FPGA_LOAD_LOCK","GPIO4","GPIO5","LED2","LED0","LED1","ARM_BUTTON","GPIO1","GPIO2","GPIO3","GPIO0","BASE_DETECT";
+-pin_states = < GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_HIGH GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN>;
++pin_names = "ERASE_STS_OUT","SRAM_LOCK","LAN7800_RESET","INT_REBOOT","LOADER_DETECT","PROG_EN_IN","FPGA_INIT_B","FPGA_DONE","FPGA_PROG","OTP_LOCK","FPGA_LOAD_LOCK","GPIO4","RGMII_RST","LED2","LED0","LED1","ARM_BUTTON","GPIO1","GPIO2","GPIO3","GPIO0","BASE_DETECT";
++pin_states = < GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_HIGH GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN>;
+ 
+         
+         interrupt-gpios = <&gpio2 17 IRQ_TYPE_EDGE_RISING>;

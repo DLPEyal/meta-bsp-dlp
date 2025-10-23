@@ -1,9 +1,9 @@
 DESCRIPTION = "MDIO tool for direct manipulation of MDIO registers"
 SECTION = "net"
-LICENSE = "GPL-2.0"
-LIC_FILES_CHKSUM = "file://${S}/COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
+LICENSE = "GPL-2.0-only"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-2.0-only;md5=801f80980d171dd6425610833a22dbe6"
 
-SRC_URI = "git://github.com/deadpoolcode1/kratos_mdio-tools;protocol=git;branch=master"
+SRC_URI = "git://github.com/deadpoolcode1/kratos_mdio-tools;protocol=https;branch=master"
 SRC_URI[sha256sum] = "a78376ba9e317002e1261f9e3aac2f4de2e97ce8b9411426d0375b94c40d1af8"
 SRCREV = "f74eaf38dbda441df4fcaeb21ca4465957953a2f"
 
