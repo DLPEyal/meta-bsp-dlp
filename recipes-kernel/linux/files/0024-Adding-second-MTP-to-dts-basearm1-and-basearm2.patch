@@ -1,0 +1,92 @@
+From b6c2fc389cbf5cd43b0d0b5d0af5bdbfd7a502c0 Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Thu, 23 Oct 2025 16:23:11 +0300
+Subject: [PATCH] Adding second MTP to dts basearm1 and basearm2
+
+---
+ arch/arm64/boot/dts/freescale/basearm1.dts | 23 ++++++++++++++++------
+ arch/arm64/boot/dts/freescale/basearm2.dts | 23 ++++++++++++++++------
+ 2 files changed, 34 insertions(+), 12 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/basearm1.dts b/arch/arm64/boot/dts/freescale/basearm1.dts
+index ef92f4877938..3aad0c4f4cff 100755
+--- a/arch/arm64/boot/dts/freescale/basearm1.dts
++++ b/arch/arm64/boot/dts/freescale/basearm1.dts
+@@ -223,6 +223,16 @@ flash0: mt25qu256aba@2 {
+ 		spi-tx-bus-width = <4>;
+ 		spi-rx-bus-width = <4>;
+ 	};
++	
++	flash1: mt25qu256aba@3 {
++		reg = <3>;
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "jedec,spi-nor";
++		spi-max-frequency = <80000000>;
++		spi-tx-bus-width = <4>;
++		spi-rx-bus-width = <4>;
++	};
+ };
+ 
+ &flexcan1 {
+@@ -953,12 +963,13 @@ MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
+ 
+ 	pinctrl_flexspi0: flexspi0grp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_NAND_ALE__FLEXSPI_A_SCLK           0x1c2
+-			MX8MP_IOMUXC_NAND_CE0_B__FLEXSPI_A_SS0_B        0x82
+-			MX8MP_IOMUXC_NAND_DATA00__FLEXSPI_A_DATA00      0x82
+-			MX8MP_IOMUXC_NAND_DATA01__FLEXSPI_A_DATA01      0x82
+-			MX8MP_IOMUXC_NAND_DATA02__FLEXSPI_A_DATA02      0x82
+-			MX8MP_IOMUXC_NAND_DATA03__FLEXSPI_A_DATA03      0x82
++			MX8MP_IOMUXC_NAND_CE2_B__FLEXSPI_B_SS0_B   0x00000106
++	          	MX8MP_IOMUXC_NAND_CLE__FLEXSPI_B_SCLK      0x000001c2
++	          	MX8MP_IOMUXC_NAND_DATA04__FLEXSPI_B_DATA00 0x00000106
++	          	MX8MP_IOMUXC_NAND_DATA05__FLEXSPI_B_DATA01 0x00000106
++	          	MX8MP_IOMUXC_NAND_DATA06__FLEXSPI_B_DATA02 0x00000106
++	          	MX8MP_IOMUXC_NAND_DATA07__FLEXSPI_B_DATA03 0x00000106
++	          	MX8MP_IOMUXC_NAND_CE3_B__FLEXSPI_B_SS1_B   0x00000106	
+ 		>;
+ 	};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/basearm2.dts b/arch/arm64/boot/dts/freescale/basearm2.dts
+index 70956f29bbfa..5408a850ba4c 100755
+--- a/arch/arm64/boot/dts/freescale/basearm2.dts
++++ b/arch/arm64/boot/dts/freescale/basearm2.dts
+@@ -223,6 +223,16 @@ flash0: mt25qu256aba@2 {
+ 		spi-tx-bus-width = <4>;
+ 		spi-rx-bus-width = <4>;
+ 	};
++	
++	flash1: mt25qu256aba@3 {
++		reg = <3>;
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "jedec,spi-nor";
++		spi-max-frequency = <80000000>;
++		spi-tx-bus-width = <4>;
++		spi-rx-bus-width = <4>;
++	};
+ };
+ 
+ &flexcan1 {
+@@ -945,12 +955,13 @@ MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
+ 
+ 	pinctrl_flexspi0: flexspi0grp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_NAND_ALE__FLEXSPI_A_SCLK           0x1c2
+-			MX8MP_IOMUXC_NAND_CE0_B__FLEXSPI_A_SS0_B        0x82
+-			MX8MP_IOMUXC_NAND_DATA00__FLEXSPI_A_DATA00      0x82
+-			MX8MP_IOMUXC_NAND_DATA01__FLEXSPI_A_DATA01      0x82
+-			MX8MP_IOMUXC_NAND_DATA02__FLEXSPI_A_DATA02      0x82
+-			MX8MP_IOMUXC_NAND_DATA03__FLEXSPI_A_DATA03      0x82
++			MX8MP_IOMUXC_NAND_CE2_B__FLEXSPI_B_SS0_B   0x00000106
++	          	MX8MP_IOMUXC_NAND_CLE__FLEXSPI_B_SCLK      0x000001c2
++	          	MX8MP_IOMUXC_NAND_DATA04__FLEXSPI_B_DATA00 0x00000106
++	          	MX8MP_IOMUXC_NAND_DATA05__FLEXSPI_B_DATA01 0x00000106
++	          	MX8MP_IOMUXC_NAND_DATA06__FLEXSPI_B_DATA02 0x00000106
++	          	MX8MP_IOMUXC_NAND_DATA07__FLEXSPI_B_DATA03 0x00000106
++	          	MX8MP_IOMUXC_NAND_CE3_B__FLEXSPI_B_SS1_B   0x00000106
+ 		>;
+ 	};
+ 

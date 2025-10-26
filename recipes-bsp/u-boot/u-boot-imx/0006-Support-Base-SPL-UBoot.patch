@@ -1,0 +1,450 @@
+From 1ef959ba0f0a92f152e96d351933e3d3d3d82d32 Mon Sep 17 00:00:00 2001
+From: Orel Eliyahu <orel_e@eyal-emi.co.il>
+Date: Mon, 31 Mar 2025 10:48:36 +0300
+Subject: [PATCH] Support Base SPL & UBoot
+
+---
+ arch/arm/dts/imx8mp-evk.dts             | 61 ++++++++++++++--
+ board/freescale/imx8mp_evk/imx8mp_evk.c | 73 ++++++++++++++++---
+ board/freescale/imx8mp_evk/spl.c        | 95 ++++++++++++++++++++++---
+ drivers/serial/serial_mxc.c             | 27 +++++++
+ entry_point                             |  0
+ load_addr                               |  0
+ name                                    |  0
+ os                                      |  0
+ 8 files changed, 236 insertions(+), 20 deletions(-)
+ create mode 100644 entry_point
+ create mode 100644 load_addr
+ create mode 100644 name
+ create mode 100644 os
+
+diff --git a/arch/arm/dts/imx8mp-evk.dts b/arch/arm/dts/imx8mp-evk.dts
+index af2c2b94ff6..1fa91ab5a38 100644
+--- a/arch/arm/dts/imx8mp-evk.dts
++++ b/arch/arm/dts/imx8mp-evk.dts
+@@ -498,6 +498,62 @@
+ 
+ &iomuxc {
+ 	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_hog>;
++	pinctrl_hog: hoggrp {
++		fsl,pins = <
++			MX8MP_IOMUXC_HDMI_DDC_SCL__HDMIMIX_HDMI_SCL	0x400001c2
++			MX8MP_IOMUXC_HDMI_DDC_SDA__HDMIMIX_HDMI_SDA	0x400001c2
++			MX8MP_IOMUXC_HDMI_HPD__HDMIMIX_HDMI_HPD		0x40000010
++			MX8MP_IOMUXC_HDMI_CEC__HDMIMIX_HDMI_CEC		0x40000010
++			
++			
++
++                	MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000146
++		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO10__GPIO1_IO10        0x00000106
++                	MX8MP_IOMUXC_GPIO1_IO11__GPIO1_IO11        0x00000106
++                	MX8MP_IOMUXC_GPIO1_IO12__GPIO1_IO12        0x00000106
++                	MX8MP_IOMUXC_GPIO1_IO13__GPIO1_IO13        0x00000106
++                	MX8MP_IOMUXC_GPIO1_IO14__GPIO1_IO14        0x00000106
++                	MX8MP_IOMUXC_GPIO1_IO15__GPIO1_IO15        0x00000106
++                	MX8MP_IOMUXC_SD2_DATA2__GPIO2_IO17         0x00000106
++                	MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04        0x00000106
++                	MX8MP_IOMUXC_SD1_DATA3__GPIO2_IO05         0x00000106
++                	MX8MP_IOMUXC_SD1_CLK__GPIO2_IO00           0x00000106
++                	MX8MP_IOMUXC_SD1_CMD__GPIO2_IO01           0x00000106
++                	MX8MP_IOMUXC_SD1_DATA0__GPIO2_IO02         0x00000106
++                	MX8MP_IOMUXC_SD1_DATA1__GPIO2_IO03         0x00000106
++                	MX8MP_IOMUXC_SD1_DATA2__GPIO2_IO04         0x00000106
++                	MX8MP_IOMUXC_SD1_DATA3__GPIO2_IO05         0x00000106
++                	
++                	MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07         0x00000106
++               	MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08         0x00000106
++                	MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09         0x00000106
++                	MX8MP_IOMUXC_SD2_CD_B__GPIO2_IO12          0x00000106
++                	MX8MP_IOMUXC_SD2_CLK__GPIO2_IO13           0x00000106
++                	MX8MP_IOMUXC_SD2_CMD__GPIO2_IO14           0x00000106
++                	MX8MP_IOMUXC_SD2_DATA0__GPIO2_IO15         0x00000106
++        		MX8MP_IOMUXC_SD2_DATA1__GPIO2_IO16         0x00000106
++                	MX8MP_IOMUXC_SD2_DATA2__GPIO2_IO17         0x00000106
++                	MX8MP_IOMUXC_SD2_DATA3__GPIO2_IO18         0x00000106
++                	MX8MP_IOMUXC_SD2_RESET_B__GPIO2_IO19       0x00000106
++                	MX8MP_IOMUXC_SD2_WP__GPIO2_IO20            0x00000106
++                	                
++                	
++			/*
++			 * M.2 pin20 & pin21 need to be set to 11 for 88W9098 to select the
++			 * default Reference Clock Frequency
++			 */
++			MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09		0x1c4
++		>;
++	};
+ 
+ 	pinctrl_eqos: eqosgrp {
+ 		fsl,pins = <
+@@ -679,7 +735,6 @@
+ 			MX8MP_IOMUXC_SD2_CLK__USDHC2_CLK	0x190
+ 			MX8MP_IOMUXC_SD2_CMD__USDHC2_CMD	0x1d0
+ 			MX8MP_IOMUXC_SD2_DATA0__USDHC2_DATA0	0x1d0
+-			MX8MP_IOMUXC_SD2_DATA1__USDHC2_DATA1	0x1d0
+ 			MX8MP_IOMUXC_SD2_DATA2__USDHC2_DATA2	0x1d0
+ 			MX8MP_IOMUXC_SD2_DATA3__USDHC2_DATA3	0x1d0
+ 			MX8MP_IOMUXC_GPIO1_IO04__USDHC2_VSELECT	0xc1
+@@ -691,7 +746,6 @@
+ 			MX8MP_IOMUXC_SD2_CLK__USDHC2_CLK	0x194
+ 			MX8MP_IOMUXC_SD2_CMD__USDHC2_CMD	0x1d4
+ 			MX8MP_IOMUXC_SD2_DATA0__USDHC2_DATA0	0x1d4
+-			MX8MP_IOMUXC_SD2_DATA1__USDHC2_DATA1	0x1d4
+ 			MX8MP_IOMUXC_SD2_DATA2__USDHC2_DATA2	0x1d4
+ 			MX8MP_IOMUXC_SD2_DATA3__USDHC2_DATA3	0x1d4
+ 			MX8MP_IOMUXC_GPIO1_IO04__USDHC2_VSELECT 0xc1
+@@ -703,7 +757,6 @@
+ 			MX8MP_IOMUXC_SD2_CLK__USDHC2_CLK	0x196
+ 			MX8MP_IOMUXC_SD2_CMD__USDHC2_CMD	0x1d6
+ 			MX8MP_IOMUXC_SD2_DATA0__USDHC2_DATA0	0x1d6
+-			MX8MP_IOMUXC_SD2_DATA1__USDHC2_DATA1	0x1d6
+ 			MX8MP_IOMUXC_SD2_DATA2__USDHC2_DATA2	0x1d6
+ 			MX8MP_IOMUXC_SD2_DATA3__USDHC2_DATA3	0x1d6
+ 			MX8MP_IOMUXC_GPIO1_IO04__USDHC2_VSELECT 0xc1
+@@ -712,7 +765,7 @@
+ 
+ 	pinctrl_usdhc2_gpio: usdhc2gpiogrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_SD2_CD_B__GPIO2_IO12	0x1c4
++
+ 		>;
+ 	};
+ 
+diff --git a/board/freescale/imx8mp_evk/imx8mp_evk.c b/board/freescale/imx8mp_evk/imx8mp_evk.c
+index a3fa1d77b0d..9ca090b7cf2 100644
+--- a/board/freescale/imx8mp_evk/imx8mp_evk.c
++++ b/board/freescale/imx8mp_evk/imx8mp_evk.c
+@@ -32,17 +32,23 @@
+ 
+ #define UART2_DTE_MODE_REG  0x30890090
+ #define BIT_6               (1 << 6)
+-
++#define GPIO_PAD_CTRL (MUX_PAD_CTRL(0x10)) // Basic pad control - adjust if needed
+ DECLARE_GLOBAL_DATA_PTR;
+ 
+ #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
+ #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
+ 
+-static iomux_v3_cfg_t const uart_pads[] = {
++static iomux_v3_cfg_t const uart_pads_arm3[] = {
+ 	MX8MP_PAD_SAI3_TXFS__UART2_DTE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
+ 	MX8MP_PAD_SAI3_TXC__UART2_DTE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
+ };
+ 
++
++static iomux_v3_cfg_t const uart_pads_arm2or1[] = {
++	MX8MP_PAD_UART2_RXD__UART2_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
++	MX8MP_PAD_UART2_TXD__UART2_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
++};
++
+ static iomux_v3_cfg_t const wdog_pads[] = {
+ 	MX8MP_PAD_GPIO1_IO02__WDOG1_WDOG_B  | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+ };
+@@ -90,23 +96,74 @@ void enable_uart2_dte_mode(void)
+     reg_val = readl(UART2_DTE_MODE_REG);
+     //printf("UART2 DTE Mode - After Write:  0x%08X\n", reg_val);
+ }
++static int read_boot_gpios(void)
++{
++	int ret;
++	int id_0 = -1, id_1 = -1, id = 0;
++
++	// Configure pads as GPIOs
++	imx_iomux_v3_setup_pad(MX8MP_PAD_SD2_CD_B__GPIO2_IO12 | GPIO_PAD_CTRL);    // GPIO44 (GPIO2_IO12)
++	imx_iomux_v3_setup_pad(MX8MP_PAD_SD2_DATA1__GPIO2_IO16 | GPIO_PAD_CTRL);   // GPIO48 (GPIO2_IO16)
+ 
++	// Initialize GPIO44
++	ret = gpio_request(IMX_GPIO_NR(2, 12), "gpio44");
++	if (ret) {
++		printf("gpio_request failed for GPIO44: %d\n", ret);
++		return ret;
++	}
++	ret = gpio_direction_input(IMX_GPIO_NR(2, 12));
++	if (ret) {
++		printf("gpio_direction_input failed for GPIO44: %d\n", ret);
++		return ret;
++	}
++	id_1 = gpio_get_value(IMX_GPIO_NR(2, 12));
++
++	// Initialize GPIO48
++	ret = gpio_request(IMX_GPIO_NR(2, 16), "gpio48");
++	if (ret) {
++		printf("gpio_request failed for GPIO48: %d\n", ret);
++		return ret;
++	}
++	ret = gpio_direction_input(IMX_GPIO_NR(2, 16));
++	if (ret) {
++		printf("gpio_direction_input failed for GPIO48: %d\n", ret);
++		return ret;
++	}
++	id_0 = gpio_get_value(IMX_GPIO_NR(2, 16));
++
++	// Combine the ID bits
++	if (id_0 < 0 || id_1 < 0) {
++		printf("Failed to read GPIO values: id_0=%d, id_1=%d\n", id_0, id_1);
++		return -EINVAL;
++	}
++
++	id = (id_0 << 1) | id_1;
++	printf("GPIO Read Success: id_0=%d, id_1=%d, id=%d\n", id_0, id_1, id);
++
++	return id;
++
++}
+ int board_early_init_f(void)
+ {
++	int armID = 0;
+  	
+ 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
+ 
+ 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
+ 
+ 	set_wdog_reset(wdog);
+-		
+-	enable_uart2_dte_mode();
+-
+-	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
+ 	
++	armID = read_boot_gpios();
++	
++	if (armID == 1 || armID == 2){
++		imx_iomux_v3_setup_multiple_pads(uart_pads_arm2or1, ARRAY_SIZE(uart_pads_arm2or1));
++	}
++	else if(armID == 3)
++	{
++		enable_uart2_dte_mode();
++		imx_iomux_v3_setup_multiple_pads(uart_pads_arm3, ARRAY_SIZE(uart_pads_arm3));
++	}
+ 	
+-
+-	init_uart_clk(1);
+ 
+ 	return 0;
+ }
+diff --git a/board/freescale/imx8mp_evk/spl.c b/board/freescale/imx8mp_evk/spl.c
+index 2f4c67b2a20..766c02b90dc 100644
+--- a/board/freescale/imx8mp_evk/spl.c
++++ b/board/freescale/imx8mp_evk/spl.c
+@@ -14,7 +14,6 @@
+ #include <asm/arch/sys_proto.h>
+ #include <asm/mach-imx/boot_mode.h>
+ #include <power/pmic.h>
+-
+ #include <power/pca9450.h>
+ #include <asm/arch/clock.h>
+ #include <dm/uclass.h>
+@@ -28,9 +27,18 @@
+ #include <mmc.h>
+ #include <asm/arch/ddr.h>
+ 
+-
++#define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
+ DECLARE_GLOBAL_DATA_PTR;
++static iomux_v3_cfg_t const uart_pads_arm3[] = {
++	MX8MP_PAD_SAI3_TXFS__UART2_DTE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
++	MX8MP_PAD_SAI3_TXC__UART2_DTE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
++};
++
+ 
++static iomux_v3_cfg_t const uart_pads_arm2or1[] = {
++	MX8MP_PAD_UART2_RXD__UART2_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
++	MX8MP_PAD_UART2_TXD__UART2_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
++};
+ int spl_board_boot_device(enum boot_device boot_dev_spl)
+ {
+ #ifdef CONFIG_SPL_BOOTROM_SUPPORT
+@@ -62,6 +70,56 @@ void spl_dram_init(void)
+ 	ddr_init(&dram_timing);
+ }
+ 
++#define GPIO_PAD_CTRL (MUX_PAD_CTRL(0x10)) // Basic pad control - adjust if needed
++
++static int read_boot_gpios(void)
++{
++	int ret;
++	int id_0 = -1, id_1 = -1, id = 0;
++
++	// Configure pads as GPIOs
++	imx_iomux_v3_setup_pad(MX8MP_PAD_SD2_CD_B__GPIO2_IO12 | GPIO_PAD_CTRL);    // GPIO44 (GPIO2_IO12)
++	imx_iomux_v3_setup_pad(MX8MP_PAD_SD2_DATA1__GPIO2_IO16 | GPIO_PAD_CTRL);   // GPIO48 (GPIO2_IO16)
++
++	// Initialize GPIO44
++	ret = gpio_request(IMX_GPIO_NR(2, 12), "gpio44");
++	if (ret) {
++		printf("gpio_request failed for GPIO44: %d\n", ret);
++		return ret;
++	}
++	ret = gpio_direction_input(IMX_GPIO_NR(2, 12));
++	if (ret) {
++		printf("gpio_direction_input failed for GPIO44: %d\n", ret);
++		return ret;
++	}
++	id_1 = gpio_get_value(IMX_GPIO_NR(2, 12));
++
++	// Initialize GPIO48
++	ret = gpio_request(IMX_GPIO_NR(2, 16), "gpio48");
++	if (ret) {
++		printf("gpio_request failed for GPIO48: %d\n", ret);
++		return ret;
++	}
++	ret = gpio_direction_input(IMX_GPIO_NR(2, 16));
++	if (ret) {
++		printf("gpio_direction_input failed for GPIO48: %d\n", ret);
++		return ret;
++	}
++	id_0 = gpio_get_value(IMX_GPIO_NR(2, 16));
++
++	// Combine the ID bits
++	if (id_0 < 0 || id_1 < 0) {
++		printf("Failed to read GPIO values: id_0=%d, id_1=%d\n", id_0, id_1);
++		return -EINVAL;
++	}
++
++	id = (id_0 << 1) | id_1;
++	printf("GPIO Read Success: id_0=%d, id_1=%d, id=%d\n", id_0, id_1, id);
++
++	return id;
++}
++
++
+ void spl_board_init(void)
+ {
+ 	if (IS_ENABLED(CONFIG_FSL_CAAM)) {
+@@ -84,7 +142,9 @@ void spl_board_init(void)
+ 	clock_enable(CCGR_GIC, 1);
+ 
+ 	puts("Normal Boot\n");
++	
+ #endif
++
+ }
+ 
+ #if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)
+@@ -151,7 +211,7 @@ int board_fit_config_name_match(const char *name)
+ void board_init_f(ulong dummy)
+ {
+ 	struct udevice *dev;
+-	int ret;
++	int ret, armID;
+ 
+ 	/* Clear the BSS. */
+ 	memset(__bss_start, 0, __bss_end - __bss_start);
+@@ -162,11 +222,6 @@ void board_init_f(ulong dummy)
+ 
+ 	timer_init();
+ 	
+-	
+-
+-	preloader_console_init();
+-	
+-	enable_uart2_dte_mode();
+ 
+ 	ret = spl_early_init();
+ 	if (ret) {
+@@ -183,6 +238,29 @@ void board_init_f(ulong dummy)
+ 	}
+ 
+ 	enable_tzc380();
++	
++	armID = read_boot_gpios();
++	
++	if (armID == 1 || armID == 2){
++		imx_iomux_v3_setup_multiple_pads(uart_pads_arm2or1, ARRAY_SIZE(uart_pads_arm2or1));
++	}
++	else
++	{
++		enable_uart2_dte_mode();
++		imx_iomux_v3_setup_multiple_pads(uart_pads_arm3, ARRAY_SIZE(uart_pads_arm3));
++	}
++	
++	init_uart_clk(1);
++	
++	
++	
++	preloader_console_init();
++	
++	/*if (id == 1){
++		enable_uart2_dte_mode();
++	}*/
++	
++	printf("ARM Number: %d \n", armID);
+ 
+ 	//power_init_board();
+ 	
+@@ -192,4 +270,5 @@ void board_init_f(ulong dummy)
+ 	spl_dram_init();
+ 
+ 	board_init_r(NULL, 0);
++	
+ }
+diff --git a/drivers/serial/serial_mxc.c b/drivers/serial/serial_mxc.c
+index 0788d49e1a0..d7d84f61ea3 100644
+--- a/drivers/serial/serial_mxc.c
++++ b/drivers/serial/serial_mxc.c
+@@ -13,6 +13,11 @@
+ #include <dm/platform_data/serial_mxc.h>
+ #include <serial.h>
+ #include <linux/compiler.h>
++#include <asm/io.h>
++#include <asm/mach-imx/iomux-v3.h>
++#include <asm-generic/gpio.h>
++#include <asm/arch/imx8mp_pins.h>
++#include <asm/mach-imx/gpio.h>
+ 
+ /* UART Control Register Bit Fields.*/
+ #define URXD_CHARRDY	(1<<15)
+@@ -245,12 +250,34 @@ static int mxc_serial_tstc(void)
+  * Initialise the serial port with the given baudrate. The settings
+  * are always 8 data bits, no parity, 1 stop bit, no start bits.
+  */
++ #define GPIO_PAD_CTRL (MUX_PAD_CTRL(0x10)) // Basic pad control - adjust if needed
++static int read_boot_gpios(void)
++{
++	int ret;
++	int id_0 = -1, id_1 = -1, id = 0;
++
++	id_1 = gpio_get_value(IMX_GPIO_NR(2, 12));
++	id_0 = gpio_get_value(IMX_GPIO_NR(2, 16));
++
++	// Combine the ID bits
++	if (id_0 < 0 || id_1 < 0) {
++		printf("after Failed to read GPIO values: id_0=%d, id_1=%d\n", id_0, id_1);
++		return -EINVAL;
++	}
++
++	id = (id_0 << 1) | id_1;
++	printf("after GPIO Read Success: id_0=%d, id_1=%d, id=%d\n", id_0, id_1, id);
++
++	return id;
++}
++
+ static int mxc_serial_init(void)
+ {
+ 	_mxc_serial_init(mxc_base, false);
+ 	
+ 	serial_setbrg();
+ 	
++	if (read_boot_gpios() == 3)
+ 	writel(readl(0x30890090) | (1 << 6), 0x30890090);
+ 
+ 	return 0;
+diff --git a/entry_point b/entry_point
+new file mode 100644
+index 00000000000..e69de29bb2d
+diff --git a/load_addr b/load_addr
+new file mode 100644
+index 00000000000..e69de29bb2d
+diff --git a/name b/name
+new file mode 100644
+index 00000000000..e69de29bb2d
+diff --git a/os b/os
+new file mode 100644
+index 00000000000..e69de29bb2d

@@ -1,0 +1,31 @@
+From 94ab613ff9b9ffa86e67ae5fd3154b72569caf51 Mon Sep 17 00:00:00 2001
+From: Orel Eliyahu <orel_e@eyal-emi.co.il>
+Date: Wed, 2 Apr 2025 10:22:30 +0300
+Subject: [PATCH]  add support of marvell 1512
+
+---
+ arch/arm/dts/imx8mp-evk.dts | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm/dts/imx8mp-evk.dts b/arch/arm/dts/imx8mp-evk.dts
+index 1fa91ab5a38..236469f1a44 100644
+--- a/arch/arm/dts/imx8mp-evk.dts
++++ b/arch/arm/dts/imx8mp-evk.dts
+@@ -157,9 +157,14 @@
+ 		#size-cells = <0>;
+ 
+ 		ethphy1: ethernet-phy@1 {
+-			compatible = "ethernet-phy-ieee802.3-c22";
+-			reg = <1>;
+-			eee-broken-1000t;
++		device_type = "ethernet-phy";
++		compatible = "marvell,88e1518";
++		reg = <0x1>;
++		
++		reset-gpios = <&gpio1 5 GPIO_ACTIVE_LOW>;
++		reset-assert-us = <10000>;
++		reset-deassert-us = <10000>;
++		
+ 		};
+ 	};
+ };

@@ -1,0 +1,144 @@
+From a30d963664833e8b69bb4839ff1331a796c3d355 Mon Sep 17 00:00:00 2001
+From: Orel Eliyahu <orel_e@eyal-emi.co.il>
+Date: Mon, 5 May 2025 07:14:27 +0300
+Subject: [PATCH]  merge and update u-boot & spl to support full DLP
+
+---
+ arch/arm/dts/imx8mp-evk.dts      | 23 ++++++-------
+ board/freescale/imx8mp_evk/spl.c | 59 ++++++++++++++++++++++++++++++--
+ 2 files changed, 67 insertions(+), 15 deletions(-)
+
+diff --git a/arch/arm/dts/imx8mp-evk.dts b/arch/arm/dts/imx8mp-evk.dts
+index 236469f1a44..931c058a56b 100644
+--- a/arch/arm/dts/imx8mp-evk.dts
++++ b/arch/arm/dts/imx8mp-evk.dts
+@@ -122,16 +122,16 @@
+ 	pinctrl-0 = <&pinctrl_eqos>;
+ 	phy-mode = "rgmii-id";
+ 	phy-handle = <&ethphy0>;
+-	status = "okay";
++	status = "disabled";
+ 
+ 	mdio {
+ 		compatible = "snps,dwmac-mdio";
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 
+-		ethphy0: ethernet-phy@1 {
++		ethphy0: ethernet-phy@0 {
+ 			compatible = "ethernet-phy-ieee802.3-c22";
+-			reg = <1>;
++			reg = <0>;
+ 			eee-broken-1000t;
+ 		};
+ 	};
+@@ -147,23 +147,22 @@
+ &fec {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_fec>;
+-	phy-mode = "rgmii-id";
++	phy-mode = "rgmii";
+ 	phy-handle = <&ethphy1>;
+-	fsl,magic-packet;
+ 	status = "okay";
+ 
+ 	mdio {
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 
+-		ethphy1: ethernet-phy@1 {
++	ethphy1: ethernet-phy@0 {
+ 		device_type = "ethernet-phy";
+-		compatible = "marvell,88e1518";
+-		reg = <0x1>;
+-		
+-		reset-gpios = <&gpio1 5 GPIO_ACTIVE_LOW>;
+-		reset-assert-us = <10000>;
+-		reset-deassert-us = <10000>;
++		compatible = "marvell,88e1510";
++		reg = <0x0>;
++		ti,rx-internal-delay = <0x8>;
++		ti,tx-internal-delay = <0xa>;
++		ti,fifo-depth = <0x1>;
++		ti,rxctrl-strap-worka;
+ 		
+ 		};
+ 	};
+diff --git a/board/freescale/imx8mp_evk/spl.c b/board/freescale/imx8mp_evk/spl.c
+index 766c02b90dc..e7ffd8fbfca 100644
+--- a/board/freescale/imx8mp_evk/spl.c
++++ b/board/freescale/imx8mp_evk/spl.c
+@@ -119,6 +119,54 @@ static int read_boot_gpios(void)
+ 	return id;
+ }
+ 
++static int reset_phy_88e1512_arm2(void)
++{
++	int ret;
++	int phyreset = 0;
++
++	// Configure pads as GPIOs
++	imx_iomux_v3_setup_pad(MX8MP_PAD_GPIO1_IO05__GPIO1_IO05 | GPIO_PAD_CTRL); 
++
++	// Initialize GPIO44
++	ret = gpio_request(IMX_GPIO_NR(1, 5), "gpio5");
++	if (ret) {
++		printf("gpio_request failed for GPIO5: %d\n", ret);
++		return ret;
++	}
++	ret = gpio_direction_output(IMX_GPIO_NR(1, 5),1);
++	if (ret) {
++		printf("gpio_direction_input failed for GPIO5: %d\n", ret);
++		return ret;
++	}
++	phyreset = gpio_set_value(IMX_GPIO_NR(1, 5),0x1);
++
++	return phyreset;
++}
++
++static int reset_phy_88e1512_arm1(void)
++{
++	int ret;
++	int phyreset = 0;
++
++	// Configure pads as GPIOs
++	imx_iomux_v3_setup_pad(MX8MP_PAD_GPIO1_IO06__GPIO1_IO06 | GPIO_PAD_CTRL); 
++
++	// Initialize GPIO44
++	ret = gpio_request(IMX_GPIO_NR(1, 6), "gpio6");
++	if (ret) {
++		printf("gpio_request failed for GPIO6: %d\n", ret);
++		return ret;
++	}
++	ret = gpio_direction_output(IMX_GPIO_NR(1, 6),1);
++	if (ret) {
++		printf("gpio_direction_input failed for GPIO6: %d\n", ret);
++		return ret;
++	}
++	phyreset = gpio_set_value(IMX_GPIO_NR(1, 6),0x1);
++
++	return phyreset;
++}
++
+ 
+ void spl_board_init(void)
+ {
+@@ -255,10 +303,15 @@ void board_init_f(ulong dummy)
+ 	
+ 	
+ 	preloader_console_init();
++
+ 	
+-	/*if (id == 1){
+-		enable_uart2_dte_mode();
+-	}*/
++	if (armID == 1){
++		reset_phy_88e1512_arm1();
++	}
++	
++	if (armID == 2){
++		reset_phy_88e1512_arm2();
++	}
+ 	
+ 	printf("ARM Number: %d \n", armID);
+ 

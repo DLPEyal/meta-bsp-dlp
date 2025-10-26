@@ -1,0 +1,181 @@
+From c5c75be75303720b5d27cc183f645482c08d9775 Mon Sep 17 00:00:00 2001
+From: OrelEKratos <orel_e@eyal-emi.co.il>
+Date: Wed, 9 Oct 2024 23:31:21 -0700
+Subject: [PATCH] Update SF PROTECT
+
+---
+ arch/arm/dts/imx8mp-evk.dts    |  2 +-
+ cmd/sf.c                       | 22 ++++++++++----
+ drivers/mtd/spi/sf_internal.h  |  5 +++-
+ drivers/mtd/spi/spi-nor-core.c | 54 +++++++++++++++++++++++++++-------
+ 4 files changed, 65 insertions(+), 18 deletions(-)
+
+diff --git a/arch/arm/dts/imx8mp-evk.dts b/arch/arm/dts/imx8mp-evk.dts
+index d1c00def6d0..b9884e90ec7 100644
+--- a/arch/arm/dts/imx8mp-evk.dts
++++ b/arch/arm/dts/imx8mp-evk.dts
+@@ -174,7 +174,7 @@
+ 		reg = <0>;
+ 		#address-cells = <1>;
+ 		#size-cells = <1>;
+-		compatible = "jedec,spi-nor";
++		compatible = "micron,n25q256a";
+ 		spi-max-frequency = <80000000>;
+ 		spi-tx-bus-width = <1>;
+ 		spi-rx-bus-width = <1>;
+diff --git a/cmd/sf.c b/cmd/sf.c
+index 380b0908211..c63325c3b55 100644
+--- a/cmd/sf.c
++++ b/cmd/sf.c
+@@ -354,6 +354,8 @@ static int do_spi_flash_erase(int argc, char *const argv[])
+ 
+ static int do_spi_protect(int argc, char *const argv[])
+ {
++	struct spi_flash *flash;
++        u8 status;
+ 	int ret = 0;
+ 	loff_t start, len;
+ 	bool prot = false;
+@@ -370,17 +372,27 @@ static int do_spi_protect(int argc, char *const argv[])
+ 		puts("len is not a valid number\n");
+ 		return 1;
+ 	}
++	
++        flash = spi_flash_probe(0, 0, 1000000, SPI_MODE_0);
++	    if (!flash) {
++		printf("SPI flash probe failed\n");
++		return 1;
++	}
++	   
++
++	
+ 
+ 	if (strcmp(argv[1], "lock") == 0)
+-		prot = true;
++		spi_flash_micron_lock(flash);
+ 	else if (strcmp(argv[1], "unlock") == 0)
+-		prot = false;
++		spi_flash_micron_unlock(flash);
+ 	else
+ 		return -1;  /* Unknown parameter */
++	
++	spi_flash_free(flash);	
+ 
+-	ret = spi_flash_protect(flash, start, len, prot);
+ 
+-	return ret == 0 ? 0 : 1;
++	return 0;
+ }
+ 
+ 
+@@ -396,7 +408,7 @@ static int do_micron_read_status(int argc, char *const argv[])
+         printf("SPI flash probe failed\n");
+         return 1;
+     }
+-
++    //spi_flash_micron_lock(flash);
+     ret = spi_flash_cmd_get_sw_write_prot(flash);
+     printf("Status Register: 0x%04X\n", ret); 
+     
+diff --git a/drivers/mtd/spi/sf_internal.h b/drivers/mtd/spi/sf_internal.h
+index 16bb0c90106..89d9d00ea42 100755
+--- a/drivers/mtd/spi/sf_internal.h
++++ b/drivers/mtd/spi/sf_internal.h
+@@ -79,7 +79,10 @@ extern const struct flash_info spi_nor_ids[];
+ 
+ /* Get software write-protect value (BP bits) */
+ int spi_flash_cmd_get_sw_write_prot(struct spi_flash *flash);
+-//int spi_flash_cmd_get_sw_write_prot_flag(struct spi_flash *flash);
++int spi_flash_cmd_get_sw_write_prot_flag(struct spi_flash *flash);
++
++int spi_flash_micron_lock(struct spi_flash *flash);
++int spi_flash_micron_unlock(struct spi_flash *flash);
+ 
+ #if CONFIG_IS_ENABLED(SPI_FLASH_MTD)
+ int spi_flash_mtd_register(struct spi_flash *flash);
+diff --git a/drivers/mtd/spi/spi-nor-core.c b/drivers/mtd/spi/spi-nor-core.c
+index 5e2b9bc6817..068ed5b511b 100755
+--- a/drivers/mtd/spi/spi-nor-core.c
++++ b/drivers/mtd/spi/spi-nor-core.c
+@@ -448,6 +448,8 @@ static int read_sr(struct spi_nor *nor)
+ 	return *val;
+ }
+ 
++
++
+ /*
+  * Read the flag status register, returning its value in the location
+  * Return the status register value.
+@@ -544,6 +546,32 @@ static struct spi_nor *mtd_to_spi_nor(struct mtd_info *mtd)
+ 	return mtd->priv;
+ }
+ 
++static int set_block_protect_bits(struct spi_nor *nor, u8 bp_bits)
++{
++    int ret;
++    u8 sr;
++
++    /* Step 1: Read the current status register */
++    sr = read_sr(nor);
++    if (sr < 0) {
++        return sr;
++    }
++
++    /* Step 2: Set the block protect bits */
++    sr &= ~0xF0;      /* Clear the existing BP bits (assuming 4 BP bits at the highest nibble) */
++    sr |= (bp_bits << 4); /* Set the new BP bits */
++
++    /* Step 3: Write the modified status register using the existing write_sr function */
++    ret = write_sr(nor, sr);
++    if (ret < 0) {
++        pr_debug("Failed to write status register\n");
++        return ret;
++    }
++
++    return 0;
++}
++
++
+ #ifndef CONFIG_SPI_FLASH_BAR
+ static u8 spi_nor_convert_opcode(u8 opcode, const u8 table[][2], size_t size)
+ {
+@@ -3915,24 +3943,28 @@ int spi_nor_scan(struct spi_nor *nor)
+ int spi_flash_cmd_get_sw_write_prot(struct spi_nor *nor)
+ {
+ 	u8 sr = read_sr(nor);
+-
+-	//if (sr < 0)
+-		//return sr;
++	
+ 	u8 fsr = read_fsr(nor);
+-		
++			
+ 	return (sr << 8) | fsr;
+-	//return (sr >> 2) & 7;
++
+ }
+ 
+-/*int spi_flash_cmd_get_sw_write_prot_flag(struct spi_nor *nor)
++int spi_flash_micron_lock(struct spi_nor *nor)
+ {
+-	int sr = read_fsr(nor);
++	write_enable(nor);
++	write_sr(nor, 0xDC);
++	return 0 ;
+ 
+-	//if (sr < 0)
+-		return fsr;
++}
+ 
+-	//return (sr >> 2) & 7;
+-}*/
++int spi_flash_micron_unlock(struct spi_nor *nor)
++{
++	write_enable(nor);
++	write_sr(nor, 0x00);
++	return 0 ;
++
++}
+ 
+ #ifdef CONFIG_SPI_FLASH_SPANSION
+ int spi_nor_read_any_reg(struct spi_nor *nor, u32 addr, u8 dummy, u8 *val)

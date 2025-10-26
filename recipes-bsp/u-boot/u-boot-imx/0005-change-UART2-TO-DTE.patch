@@ -1,0 +1,146 @@
+From f6a62008aabd62013517994448de08ed70339e2b Mon Sep 17 00:00:00 2001
+From: Orel Eliyahu <orel_e@eyal-emi.co.il>
+Date: Wed, 5 Feb 2025 17:47:36 +0200
+Subject: [PATCH] change UART2 TO DTE
+
+---
+ arch/arm/dts/imx8mp-evk.dts             |  1 +
+ board/freescale/imx8mp_evk/imx8mp_evk.c | 32 +++++++++++++++++++++++--
+ board/freescale/imx8mp_evk/spl.c        |  7 ++++++
+ drivers/serial/serial_mxc.c             |  4 +++-
+ 4 files changed, 41 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm/dts/imx8mp-evk.dts b/arch/arm/dts/imx8mp-evk.dts
+index 0274789dc1b..af2c2b94ff6 100644
+--- a/arch/arm/dts/imx8mp-evk.dts
++++ b/arch/arm/dts/imx8mp-evk.dts
+@@ -416,6 +416,7 @@
+ 	/* console */
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_uart2>;
++	fsl,dte-mode;
+ 	status = "okay";
+ };
+ 
+diff --git a/board/freescale/imx8mp_evk/imx8mp_evk.c b/board/freescale/imx8mp_evk/imx8mp_evk.c
+index 1cb18948af6..a3fa1d77b0d 100644
+--- a/board/freescale/imx8mp_evk/imx8mp_evk.c
++++ b/board/freescale/imx8mp_evk/imx8mp_evk.c
+@@ -30,14 +30,17 @@
+ #include <linux/arm-smccc.h>
+ #include <mmc.h>
+ 
++#define UART2_DTE_MODE_REG  0x30890090
++#define BIT_6               (1 << 6)
++
+ DECLARE_GLOBAL_DATA_PTR;
+ 
+ #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
+ #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
+ 
+ static iomux_v3_cfg_t const uart_pads[] = {
+-	MX8MP_PAD_SAI3_TXFS__UART2_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
+-	MX8MP_PAD_SAI3_TXC__UART2_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
++	MX8MP_PAD_SAI3_TXFS__UART2_DTE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
++	MX8MP_PAD_SAI3_TXC__UART2_DTE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
+ };
+ 
+ static iomux_v3_cfg_t const wdog_pads[] = {
+@@ -69,15 +72,39 @@ struct efi_capsule_update_info update_info = {
+ u8 num_image_type_guids = ARRAY_SIZE(fw_images);
+ #endif /* EFI_HAVE_CAPSULE_SUPPORT */
+ 
++void enable_uart2_dte_mode(void)
++{
++    uint32_t reg_val;
++
++    /* Read the current register value */
++    reg_val = readl(UART2_DTE_MODE_REG);
++    //printf("UART2 DTE Mode - Before Write: 0x%08X\n", reg_val);
++
++    /* Set bit 6 to 1 */
++    reg_val |= BIT_6;
++
++    /* Write back the modified value */
++    writel(reg_val, UART2_DTE_MODE_REG);
++
++    /* Read back the register value after write */
++    reg_val = readl(UART2_DTE_MODE_REG);
++    //printf("UART2 DTE Mode - After Write:  0x%08X\n", reg_val);
++}
++
+ int board_early_init_f(void)
+ {
++ 	
+ 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
+ 
+ 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
+ 
+ 	set_wdog_reset(wdog);
++		
++	enable_uart2_dte_mode();
+ 
+ 	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
++	
++	
+ 
+ 	init_uart_clk(1);
+ 
+@@ -490,6 +517,7 @@ int board_init(void)
+ 
+ int board_late_init(void)
+ {
++
+ #ifdef CONFIG_ENV_IS_IN_MMC
+ 	board_late_mmc_env_init();
+ #endif
+diff --git a/board/freescale/imx8mp_evk/spl.c b/board/freescale/imx8mp_evk/spl.c
+index 4316ae3356b..2f4c67b2a20 100644
+--- a/board/freescale/imx8mp_evk/spl.c
++++ b/board/freescale/imx8mp_evk/spl.c
+@@ -28,6 +28,7 @@
+ #include <mmc.h>
+ #include <asm/arch/ddr.h>
+ 
++
+ DECLARE_GLOBAL_DATA_PTR;
+ 
+ int spl_board_boot_device(enum boot_device boot_dev_spl)
+@@ -160,8 +161,12 @@ void board_init_f(ulong dummy)
+ 	board_early_init_f();
+ 
+ 	timer_init();
++	
++	
+ 
+ 	preloader_console_init();
++	
++	enable_uart2_dte_mode();
+ 
+ 	ret = spl_early_init();
+ 	if (ret) {
+@@ -180,6 +185,8 @@ void board_init_f(ulong dummy)
+ 	enable_tzc380();
+ 
+ 	//power_init_board();
++	
++	
+ 
+ 	/* DDR initialization */
+ 	spl_dram_init();
+diff --git a/drivers/serial/serial_mxc.c b/drivers/serial/serial_mxc.c
+index 058f526b2cc..0788d49e1a0 100644
+--- a/drivers/serial/serial_mxc.c
++++ b/drivers/serial/serial_mxc.c
+@@ -248,8 +248,10 @@ static int mxc_serial_tstc(void)
+ static int mxc_serial_init(void)
+ {
+ 	_mxc_serial_init(mxc_base, false);
+-
++	
+ 	serial_setbrg();
++	
++	writel(readl(0x30890090) | (1 << 6), 0x30890090);
+ 
+ 	return 0;
+ }
