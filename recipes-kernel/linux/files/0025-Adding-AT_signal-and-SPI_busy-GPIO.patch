@@ -1,0 +1,41 @@
+From b3f2da688a6a19d8de1b296b1e94a9f4d358cac0 Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Tue, 28 Oct 2025 18:31:21 +0200
+Subject: [PATCH] Adding AT_signal and SPI_busy GPIO
+
+---
+ arch/arm64/boot/dts/freescale/decoder.dts          | 3 ++-
+ arch/arm64/boot/dts/freescale/decoder_gpio_named.h | 6 +++---
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/decoder.dts b/arch/arm64/boot/dts/freescale/decoder.dts
+index d72b0a54fa4e..ccdad31fee6c 100755
+--- a/arch/arm64/boot/dts/freescale/decoder.dts
++++ b/arch/arm64/boot/dts/freescale/decoder.dts
+@@ -875,7 +875,8 @@ MX8MP_IOMUXC_SD2_DATA2__GPIO2_IO17         0x00000106
+                 	MX8MP_IOMUXC_SD2_DATA3__GPIO2_IO18         0x00000106
+                 	MX8MP_IOMUXC_SD2_RESET_B__GPIO2_IO19       0x00000106
+                 	MX8MP_IOMUXC_SD2_WP__GPIO2_IO20            0x00000106
+-                	                
++                	MX8MP_IOMUXC_SD1_STROBE__GPIO2_IO11		0x00000010		
++                	MX8MP_IOMUXC_SD1_RESET_B__GPIO2_IO10		0x00000010    
+                 	
+ 			/*
+ 			 * M.2 pin20 & pin21 need to be set to 11 for 88W9098 to select the
+diff --git a/arch/arm64/boot/dts/freescale/decoder_gpio_named.h b/arch/arm64/boot/dts/freescale/decoder_gpio_named.h
+index 992d531dfff6..c8f5516001ea 100755
+--- a/arch/arm64/boot/dts/freescale/decoder_gpio_named.h
++++ b/arch/arm64/boot/dts/freescale/decoder_gpio_named.h
+@@ -3,9 +3,9 @@
+         compatible = "kratos,kratos_station-pm";
+         platform-unique;
+         status = "okay";
+-pin_numbers = <0 1 4 8 9 10 11 12 13 14 15 32 33 34 35 36 37 39 40 45 46 47>;
+-pin_names = "ERASE_STS_OUT","SRAM_LOCK","LAN7800_RESET","INT_REBOOT","LOADER_DETECT","PROG_EN_IN","FPGA_INIT_B","FPGA_DONE","FPGA_PROG","OTP_LOCK","FPGA_LOAD_LOCK","GPIO4","RGMII_RST","LED2","LED0","LED1","ARM_BUTTON","GPIO1","GPIO2","GPIO3","GPIO0","BASE_DETECT";
+-pin_states = < GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_HIGH GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN>;
++pin_numbers = <0 1 4 8 9 10 11 12 13 14 15 32 33 34 35 36 37 39 40 42 43 45 46 47>;
++pin_names = "ERASE_STS_OUT","SRAM_LOCK","LAN7800_RESET","INT_REBOOT","LOADER_DETECT","PROG_EN_IN","FPGA_INIT_B","FPGA_DONE","FPGA_PROG","OTP_LOCK","FPGA_LOAD_LOCK","GPIO4","RGMII_RST","LED2","LED0","LED1","ARM_BUTTON","GPIO1","GPIO2","FPGA_SPI_BUSY","AT_SIGNAL","GPIO3","GPIO0","BASE_DETECT";
++pin_states = < GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_HIGH GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_OUT_INIT_LOW GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN GPIOF_IN>;
+ 
+         
+         interrupt-gpios = <&gpio2 17 IRQ_TYPE_EDGE_RISING>;

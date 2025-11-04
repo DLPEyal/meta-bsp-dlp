@@ -29,6 +29,7 @@ SRC_URI += "file://0001-removed-promisc-check-on-eth1.patch \
 	    file://0022-Separate-DTS-files-GPIO-fixes-Driver-update.patch \
 	    file://0023-RGMII_RST-change.patch \
 	    file://0024-Adding-second-MTP-to-dts-basearm1-and-basearm2.patch \
+	    file://0025-Adding-AT_signal-and-SPI_busy-GPIO.patch \
             file://defconfig.cfg"
 
 
