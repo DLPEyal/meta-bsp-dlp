@@ -1,0 +1,77 @@
+From c588780a273b8682386fb79666fa57b1c5684ee7 Mon Sep 17 00:00:00 2001
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Wed, 21 Jan 2026 14:05:53 +0200
+Subject: [PATCH] PMIC pin fix ARM1-3
+
+---
+ arch/arm64/boot/dts/freescale/basearm1.dts | 3 +--
+ arch/arm64/boot/dts/freescale/basearm2.dts | 3 +--
+ arch/arm64/boot/dts/freescale/decoder.dts  | 3 +--
+ 3 files changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/basearm1.dts b/arch/arm64/boot/dts/freescale/basearm1.dts
+index 3aad0c4f4cff..d8924ed37f76 100755
+--- a/arch/arm64/boot/dts/freescale/basearm1.dts
++++ b/arch/arm64/boot/dts/freescale/basearm1.dts
+@@ -839,7 +839,6 @@ MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04        0x00000106
+-		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000146
+ 		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08        0x00000106
+@@ -1022,7 +1021,7 @@ pinctrl_pcie: pciegrp {
+ 
+ 	pinctrl_pmic: pmicgrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05	0x000001c0
++			MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05	0x00000146
+ 		>;
+ 	};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/basearm2.dts b/arch/arm64/boot/dts/freescale/basearm2.dts
+index c1acabab9ef0..0edcd13c17cb 100755
+--- a/arch/arm64/boot/dts/freescale/basearm2.dts
++++ b/arch/arm64/boot/dts/freescale/basearm2.dts
+@@ -701,7 +701,6 @@ pinctrl_hog: hoggrp {
+                 	MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03        0x00000106
+-		        MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000146
+ 		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07        0x00000106
+@@ -867,7 +866,7 @@ MX8MP_IOMUXC_I2C4_SDA__I2C4_SDA            0x400001c2
+ 
+ 	pinctrl_pmic: pmicgrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x000001c0
++			MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04	0x00000146
+ 		>;
+ 	};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/decoder.dts b/arch/arm64/boot/dts/freescale/decoder.dts
+index 3e20ad42dd9a..f2714ea5c2a9 100755
+--- a/arch/arm64/boot/dts/freescale/decoder.dts
++++ b/arch/arm64/boot/dts/freescale/decoder.dts
+@@ -841,7 +841,6 @@ MX8MP_IOMUXC_HDMI_CEC__HDMIMIX_HDMI_CEC		0x40000010
+ 
+                 	MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01        0x00000106
+-		        MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000146
+ 		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000106
+@@ -1065,7 +1064,7 @@ MX8MP_IOMUXC_I2C4_SDA__GPIO5_IO21		0x1c4
+ 
+ 	pinctrl_pmic: pmicgrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x000001c0
++			MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x00000146
+ 		>;
+ 	};
+ 
+-- 
+2.39.5
+

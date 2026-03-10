@@ -1,0 +1,475 @@
+From f3d7ed3eadecd26552bddca0612e2e134d5fae40 Mon Sep 17 00:00:00 2001
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Mon, 26 Jan 2026 09:22:44 +0200
+Subject: [PATCH] fix reg format, remove DMA on uart and audio, ARM1-3
+
+---
+ arch/arm64/boot/dts/freescale/basearm1.dts | 76 ++++------------------
+ arch/arm64/boot/dts/freescale/basearm2.dts | 75 +++------------------
+ arch/arm64/boot/dts/freescale/decoder.dts  | 76 ++++------------------
+ 3 files changed, 33 insertions(+), 194 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/basearm1.dts b/arch/arm64/boot/dts/freescale/basearm1.dts
+index d8924ed37f76..9f203fefa526 100755
+--- a/arch/arm64/boot/dts/freescale/basearm1.dts
++++ b/arch/arm64/boot/dts/freescale/basearm1.dts
+@@ -33,12 +33,12 @@ status {
+ 
+ 	memory@40000000 {
+ 		device_type = "memory";
+-		reg = <0x40000000 0x40000000>;
++		reg = <0x0 0x40000000 0x0 0x40000000>;
+ 	};
+ 	
+ 	gpt1: timer@302d0000 {
+ 	    compatible = "fsl,imx8mp-gpt", "fsl,imx7d-gpt";
+-	    reg = <0x302d0000 0x10000>;
++	    reg = <0x0 0x302d0000 0x0 0x10000>;
+ 	    interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
+ 	    clocks = <&clk IMX8MP_CLK_GPT1>;
+ 	    clock-names = "ipg";
+@@ -88,7 +88,7 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		regulator-max-microvolt = <3300000>;
+ 		gpio = <&gpio4 29 GPIO_ACTIVE_HIGH>;
+ 		enable-active-high;
+-		regulator-always-on;
++		status = "disabled";
+ 	};
+ 
+ 	bt_sco_codec: bt_sco_codec {
+@@ -127,49 +127,7 @@ sound-hdmi {
+ 				<48000>,
+ 				<96000>,
+ 				<192000>;
+-		status = "okay";
+-	};
+-
+-	sound-wm8960 {
+-		compatible = "fsl,imx-audio-wm8960";
+-		model = "wm8960-audio";
+-		audio-cpu = <&sai3>;
+-		audio-codec = <&codec>;
+-		audio-asrc = <&easrc>;
+-		hp-det-gpio = <&gpio4 28 0>;
+-		audio-routing =
+-			"Headphone Jack", "HP_L",
+-			"Headphone Jack", "HP_R",
+-			"Ext Spk", "SPK_LP",
+-			"Ext Spk", "SPK_LN",
+-			"Ext Spk", "SPK_RP",
+-			"Ext Spk", "SPK_RN",
+-			"LINPUT1", "Mic Jack",
+-			"LINPUT3", "Mic Jack",
+-			"Mic Jack", "MICB";
+-	};
+-
+-	sound-micfil {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-micfil";
+-		pri-dai-link {
+-			link-name = "micfil hifi";
+-			format = "i2s";
+-			cpu {
+-				sound-dai = <&micfil>;
+-			};
+-		};
+-	};
+-
+-	sound-xcvr {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-xcvr";
+-		pri-dai-link {
+-			link-name = "XCVR PCM";
+-			cpu {
+-				sound-dai = <&xcvr>;
+-			};
+-		};
++		status = "disabled";
+ 	};
+ 
+ 	lvds_backlight: lvds_backlight {
+@@ -289,7 +247,7 @@ &pwm4 {
+ };
+ 
+ &aud2htx {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &ecspi1 {
+@@ -545,18 +503,6 @@ pca6416: gpio@20 {
+ 		gpio-controller;
+ 		#gpio-cells = <2>;
+ 	};
+-
+-	codec: wm8960@1a {
+-		compatible = "wlf,wm8960";
+-		reg = <0x1a>;
+-		clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_MCLK1>;
+-		clock-names = "mclk";
+-		wlf,shared-lrclk;
+-		wlf,hp-cfg = <3 2 3>;
+-		wlf,gpio-cfg = <1 3>;
+-		SPKVDD1-supply = <&reg_audio_pwr>;
+-	};
+-
+ 	
+ };
+ 
+@@ -647,7 +593,7 @@ &snvs_pwrkey {
+ 
+ &easrc {
+ 	fsl,asrc-rate  = <48000>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &micfil {
+@@ -710,7 +656,7 @@ &sai2 {
+ 	assigned-clocks = <&clk IMX8MP_CLK_SAI2>;
+ 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+ 	assigned-clock-rates = <12288000>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &sai3 {
+@@ -724,16 +670,16 @@ &sai3 {
+ 		 <&clk IMX8MP_CLK_DUMMY>;
+ 	clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
+ 	fsl,sai-mclk-direction-output;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &xcvr {
+ 	#sound-dai-cells = <0>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &sdma2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &uart1 { /* BT */
+@@ -748,6 +694,8 @@ &uart2 {
+ 	/* console */
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_uart2>;
++	/delete-property/ dmas;
++    /delete-property/ dma-names;
+ 	status = "okay";
+ };
+ 
+diff --git a/arch/arm64/boot/dts/freescale/basearm2.dts b/arch/arm64/boot/dts/freescale/basearm2.dts
+index 0edcd13c17cb..332c6a9b0cf5 100755
+--- a/arch/arm64/boot/dts/freescale/basearm2.dts
++++ b/arch/arm64/boot/dts/freescale/basearm2.dts
+@@ -33,12 +33,12 @@ status {
+ 
+ 	memory@40000000 {
+ 		device_type = "memory";
+-		reg = <0x40000000 0x40000000>;
++		reg = <0x0 0x40000000 0x0 0x40000000>;
+ 	};
+ 	
+ 	gpt1: timer@302d0000 {
+ 	    compatible = "fsl,imx8mp-gpt", "fsl,imx7d-gpt";
+-	    reg = <0x302d0000 0x10000>;
++	    reg = <0x0 0x302d0000 0x0 0x10000>;
+ 	    interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
+ 	    clocks = <&clk IMX8MP_CLK_GPT1>;
+ 	    clock-names = "ipg";
+@@ -79,7 +79,6 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		regulator-max-microvolt = <3300000>;
+ 		gpio = <&gpio4 29 GPIO_ACTIVE_HIGH>;
+ 		enable-active-high;
+-		regulator-always-on;
+ 		status = "disabled";
+ 	};
+ 
+@@ -125,52 +124,6 @@ sound-hdmi {
+ 				<192000>;
+ 		status = "disabled";
+ 	};
+-
+-	sound-wm8960 {
+-		compatible = "fsl,imx-audio-wm8960";
+-		model = "wm8960-audio";
+-		audio-cpu = <&sai3>;
+-		audio-codec = <&codec>;
+-		audio-asrc = <&easrc>;
+-		hp-det-gpio = <&gpio4 28 0>;
+-		audio-routing =
+-			"Headphone Jack", "HP_L",
+-			"Headphone Jack", "HP_R",
+-			"Ext Spk", "SPK_LP",
+-			"Ext Spk", "SPK_LN",
+-			"Ext Spk", "SPK_RP",
+-			"Ext Spk", "SPK_RN",
+-			"LINPUT1", "Mic Jack",
+-			"LINPUT3", "Mic Jack",
+-			"Mic Jack", "MICB";
+-		status = "disabled";
+-	};
+-
+-	sound-micfil {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-micfil";
+-		status = "disabled";
+-		pri-dai-link {
+-			link-name = "micfil hifi";
+-			format = "i2s";
+-			cpu {
+-				sound-dai = <&micfil>;
+-			};
+-		};
+-	};
+-
+-	sound-xcvr {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-xcvr";
+-		status = "disabled";
+-		pri-dai-link {
+-			link-name = "XCVR PCM";
+-			cpu {
+-				sound-dai = <&xcvr>;
+-			};
+-		};
+-	};
+-
+ 	
+ 	cbtl04gp {
+ 		compatible = "nxp,cbtl04gp";
+@@ -253,7 +206,7 @@ &dsp {
+ 
+ 
+ &aud2htx {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &ecspi1 {
+@@ -479,18 +432,6 @@ pca6416: gpio@20 {
+ 		#gpio-cells = <2>;
+ 	};
+ 
+-	codec: wm8960@1a {
+-		compatible = "wlf,wm8960";
+-		reg = <0x1a>;
+-		clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_MCLK1>;
+-		clock-names = "mclk";
+-		wlf,shared-lrclk;
+-		wlf,hp-cfg = <3 2 3>;
+-		wlf,gpio-cfg = <1 3>;
+-		SPKVDD1-supply = <&reg_audio_pwr>;
+-	};
+-
+-	
+ };
+ 
+ &i2c4 {
+@@ -533,7 +474,7 @@ &snvs_pwrkey {
+ 
+ &easrc {
+ 	fsl,asrc-rate  = <48000>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &micfil {
+@@ -592,7 +533,7 @@ &sai2 {
+ 	assigned-clocks = <&clk IMX8MP_CLK_SAI2>;
+ 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+ 	assigned-clock-rates = <12288000>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &sai3 {
+@@ -606,7 +547,7 @@ &sai3 {
+ 		 <&clk IMX8MP_CLK_DUMMY>;
+ 	clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
+ 	fsl,sai-mclk-direction-output;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &xcvr {
+@@ -615,7 +556,7 @@ &xcvr {
+ };
+ 
+ &sdma2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &uart1 { /* BT */
+@@ -630,6 +571,8 @@ &uart2 {
+ 	/* console */
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_uart2>;
++	/delete-property/ dmas;
++    /delete-property/ dma-names;
+ 	status = "okay";
+ };
+ 
+diff --git a/arch/arm64/boot/dts/freescale/decoder.dts b/arch/arm64/boot/dts/freescale/decoder.dts
+index f2714ea5c2a9..7f0f8d785ff3 100755
+--- a/arch/arm64/boot/dts/freescale/decoder.dts
++++ b/arch/arm64/boot/dts/freescale/decoder.dts
+@@ -33,12 +33,12 @@ status {
+ 
+ 	memory@40000000 {
+ 		device_type = "memory";
+-		reg = <0x40000000 0x40000000>;
++		reg = <0x0 0x40000000 0x0 0x40000000>;
+ 	};
+ 	
+ 	gpt1: timer@302d0000 {
+ 	    compatible = "fsl,imx8mp-gpt", "fsl,imx7d-gpt";
+-	    reg = <0x302d0000 0x10000>;
++	    reg = <0x0 0x302d0000 0x0 0x10000>;
+ 	    interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
+ 	    clocks = <&clk IMX8MP_CLK_GPT1>;
+ 	    clock-names = "ipg";
+@@ -88,7 +88,7 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		regulator-max-microvolt = <3300000>;
+ 		gpio = <&gpio4 29 GPIO_ACTIVE_HIGH>;
+ 		enable-active-high;
+-		regulator-always-on;
++		status = "disabled";
+ 	};
+ 
+ 	bt_sco_codec: bt_sco_codec {
+@@ -127,49 +127,7 @@ sound-hdmi {
+ 				<48000>,
+ 				<96000>,
+ 				<192000>;
+-		status = "okay";
+-	};
+-
+-	sound-wm8960 {
+-		compatible = "fsl,imx-audio-wm8960";
+-		model = "wm8960-audio";
+-		audio-cpu = <&sai3>;
+-		audio-codec = <&codec>;
+-		audio-asrc = <&easrc>;
+-		hp-det-gpio = <&gpio4 28 0>;
+-		audio-routing =
+-			"Headphone Jack", "HP_L",
+-			"Headphone Jack", "HP_R",
+-			"Ext Spk", "SPK_LP",
+-			"Ext Spk", "SPK_LN",
+-			"Ext Spk", "SPK_RP",
+-			"Ext Spk", "SPK_RN",
+-			"LINPUT1", "Mic Jack",
+-			"LINPUT3", "Mic Jack",
+-			"Mic Jack", "MICB";
+-	};
+-
+-	sound-micfil {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-micfil";
+-		pri-dai-link {
+-			link-name = "micfil hifi";
+-			format = "i2s";
+-			cpu {
+-				sound-dai = <&micfil>;
+-			};
+-		};
+-	};
+-
+-	sound-xcvr {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-xcvr";
+-		pri-dai-link {
+-			link-name = "XCVR PCM";
+-			cpu {
+-				sound-dai = <&xcvr>;
+-			};
+-		};
++		status = "disabled";
+ 	};
+ 
+ 	lvds_backlight: lvds_backlight {
+@@ -279,7 +237,7 @@ &pwm4 {
+ };
+ 
+ &aud2htx {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &ecspi1 {
+@@ -555,18 +513,6 @@ pca6416: gpio@20 {
+ 		gpio-controller;
+ 		#gpio-cells = <2>;
+ 	};
+-
+-	codec: wm8960@1a {
+-		compatible = "wlf,wm8960";
+-		reg = <0x1a>;
+-		clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_MCLK1>;
+-		clock-names = "mclk";
+-		wlf,shared-lrclk;
+-		wlf,hp-cfg = <3 2 3>;
+-		wlf,gpio-cfg = <1 3>;
+-		SPKVDD1-supply = <&reg_audio_pwr>;
+-	};
+-
+ 	
+ };
+ 
+@@ -644,7 +590,7 @@ &snvs_pwrkey {
+ 
+ &easrc {
+ 	fsl,asrc-rate  = <48000>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &micfil {
+@@ -707,7 +653,7 @@ &sai2 {
+ 	assigned-clocks = <&clk IMX8MP_CLK_SAI2>;
+ 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+ 	assigned-clock-rates = <12288000>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &sai3 {
+@@ -721,16 +667,16 @@ &sai3 {
+ 		 <&clk IMX8MP_CLK_DUMMY>;
+ 	clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
+ 	fsl,sai-mclk-direction-output;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &xcvr {
+ 	#sound-dai-cells = <0>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &sdma2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &uart1 { /* BT */
+@@ -746,6 +692,8 @@ &uart2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_uart2>;
+ 	fsl,dte-mode;
++	/delete-property/ dmas;
++    /delete-property/ dma-names;
+ 	status = "okay";
+ };
+ 
+-- 
+2.39.5
+

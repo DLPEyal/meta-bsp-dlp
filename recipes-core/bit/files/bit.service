@@ -1,5 +1,6 @@
 [Unit]
 Description=BIT Service
+After=armid.service uds2uart.service uds2spi.service
 
 [Service]
 ExecStart=/usr/bin/bit.sh

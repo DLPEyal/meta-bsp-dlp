@@ -1,0 +1,113 @@
+From a5f6c358d41d70930267629e27445756f17f3a59 Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Sun, 16 Nov 2025 16:58:13 +0200
+Subject: [PATCH] SF changes for protect
+
+---
+ cmd/sf.c | 46 ++++++++++++++++++++++++++++------------------
+ 1 file changed, 28 insertions(+), 18 deletions(-)
+
+diff --git a/cmd/sf.c b/cmd/sf.c
+index c63325c3b55..eacff3d5c94 100644
+--- a/cmd/sf.c
++++ b/cmd/sf.c
+@@ -357,30 +357,34 @@ static int do_spi_protect(int argc, char *const argv[])
+ 	struct spi_flash *flash;
+         u8 status;
+ 	int ret = 0;
+-	loff_t start, len;
++	loff_t start, len, cs;
+ 	bool prot = false;
+-
+-	if (argc != 4)
++	
++	if (argc != 5){
+ 		return -1;
+-
++	}
++	
+ 	if (!str2off(argv[2], &start)) {
+ 		puts("start sector is not a valid number\n");
+-		return 1;
++		return -1;
+ 	}
+-
++	
+ 	if (!str2off(argv[3], &len)) {
+ 		puts("len is not a valid number\n");
+-		return 1;
++		return -1;
+ 	}
+ 	
+-        flash = spi_flash_probe(0, 0, 1000000, SPI_MODE_0);
++	if (!str2off(argv[4], &cs)) {
++		puts("cs is not a valid number\n");
++		return -1;
++	}
++		
++        flash = spi_flash_probe(0, cs, 8500000, SPI_MODE_0);
+ 	    if (!flash) {
+ 		printf("SPI flash probe failed\n");
+-		return 1;
+-	}
+-	   
++		return -1;
++	}  
+ 
+-	
+ 
+ 	if (strcmp(argv[1], "lock") == 0)
+ 		spi_flash_micron_lock(flash);
+@@ -391,7 +395,6 @@ static int do_spi_protect(int argc, char *const argv[])
+ 	
+ 	spi_flash_free(flash);	
+ 
+-
+ 	return 0;
+ }
+ 
+@@ -402,8 +405,16 @@ static int do_micron_read_status(int argc, char *const argv[])
+     struct spi_flash *flash;
+     u8 status;
+     int ret;
++    loff_t  cs;
+ 
+-    flash = spi_flash_probe(0, 0, 1000000, SPI_MODE_0);
++    if (argc != 2)
++		return -1;
++
++    if (!str2off(argv[1], &cs)) {
++		puts("cs is not a valid number\n");
++		return 1;
++	}
++    flash = spi_flash_probe(0, cs, 8500000, SPI_MODE_0);
+     if (!flash) {
+         printf("SPI flash probe failed\n");
+         return 1;
+@@ -608,7 +619,6 @@ static int do_spi_flash(struct cmd_tbl *cmdtp, int flag, int argc,
+ 		puts("No SPI flash selected. Please run `sf probe'\n");
+ 		return 1;
+ 	}
+-
+ 	if (strcmp(cmd, "read") == 0 || strcmp(cmd, "write") == 0 ||
+ 	    strcmp(cmd, "update") == 0)
+ 		ret = do_spi_flash_read_write(argc, argv);
+@@ -647,8 +657,8 @@ static const char long_help[] =
+ 	"sf update addr offset|partition len	- erase and write `len' bytes from memory\n"
+ 	"					  at `addr' to flash at `offset'\n"
+ 	"					  or to start of mtd `partition'\n"
+-	"sf protect lock/unlock sector len	- protect/unprotect 'len' bytes starting\n"
+-	" 					  at address 'sector'\n"
++	"sf protect lock/unlock sector len cs	- protect/unprotect 'len' bytes starting\n"
++	" 					  at address 'sector' on cs# \n"
+ 	"sf strg offset dummy 			- read a register located at 'offset' with\n"
+ 	" 					'dummy' cycles and print the value\n"
+ 	"sf wrar offset val 			- write 'val' to a register located at\n"
+@@ -661,6 +671,6 @@ static const char long_help[] =
+ 	;
+ 
+ U_BOOT_CMD(
+-	sf,	5,	1,	do_spi_flash,
++	sf,	6,	1,	do_spi_flash,
+ 	"SPI flash sub-system", long_help
+ );

@@ -1,0 +1,35 @@
+From 0c084a3fd31a31f27c26f885612fc1c0e5ed168e Mon Sep 17 00:00:00 2001
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Tue, 27 Jan 2026 23:37:51 +0200
+Subject: [PATCH 1/2] optee: reserve memory
+
+---
+ arch/arm/dts/imx8mp-evk.dts | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/arch/arm/dts/imx8mp-evk.dts b/arch/arm/dts/imx8mp-evk.dts
+index 829c4ea4aa0..7700443c790 100644
+--- a/arch/arm/dts/imx8mp-evk.dts
++++ b/arch/arm/dts/imx8mp-evk.dts
+@@ -33,6 +33,18 @@
+ 		device_type = "memory";
+ 		reg = <0x40000000 0x40000000>;
+ 	};
++	
++	reserved-memory {
++	    #address-cells = <2>;
++	    #size-cells = <2>;
++	    ranges;
++
++	    optee@40400000 {
++	        reg = <0x0 0x40400000 0x0 0x02000000>; /* 32MB */
++	        no-map;
++	    };
++	};
++
+ 
+ 	reg_can1_stby: regulator-can1-stby {
+ 		compatible = "regulator-fixed";
+-- 
+2.39.5
+

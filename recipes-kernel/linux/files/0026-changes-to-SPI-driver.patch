@@ -1,0 +1,45 @@
+From e87a4907b80d5fe035be287858753ea60a2c090b Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Tue, 11 Nov 2025 10:52:15 +0200
+Subject: [PATCH] changes to SPI driver to set ECPI_MOSI line to 0 in inactive
+ state
+
+---
+ arch/arm64/boot/dts/freescale/decoder.dts | 2 +-
+ drivers/spi/spi-imx.c                     | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/decoder.dts b/arch/arm64/boot/dts/freescale/decoder.dts
+index ccdad31fee6c..3e20ad42dd9a 100755
+--- a/arch/arm64/boot/dts/freescale/decoder.dts
++++ b/arch/arm64/boot/dts/freescale/decoder.dts
+@@ -933,7 +933,7 @@ MX8MP_IOMUXC_UART2_TXD__ECSPI3_SS0         0x00000106
+ 	pinctrl_ecspi1: ecspi1grp {
+ 		fsl,pins = <
+                   MX8MP_IOMUXC_ECSPI1_MISO__ECSPI1_MISO      0x00000106
+-                  MX8MP_IOMUXC_ECSPI1_MOSI__ECSPI1_MOSI      0x00000106
++                  MX8MP_IOMUXC_ECSPI1_MOSI__ECSPI1_MOSI      0x00000186
+                   MX8MP_IOMUXC_ECSPI1_SCLK__ECSPI1_SCLK      0x00000106
+ 		>;
+ 	};
+diff --git a/drivers/spi/spi-imx.c b/drivers/spi/spi-imx.c
+index 3081ea0eda3b..0b2c9877c855 100644
+--- a/drivers/spi/spi-imx.c
++++ b/drivers/spi/spi-imx.c
+@@ -267,6 +267,7 @@ static bool spi_imx_can_dma(struct spi_master *master, struct spi_device *spi,
+ #define MX51_ECSPI_CONFIG_SCLKPOL(cs)	(1 << ((cs) +  4))
+ #define MX51_ECSPI_CONFIG_SBBCTRL(cs)	(1 << ((cs) +  8))
+ #define MX51_ECSPI_CONFIG_SSBPOL(cs)	(1 << ((cs) + 12))
++#define MX51_ECSPI_CONFIG_DATACTL(cs)  (1 << ((cs) + 16)) 	//Added Datactl bit
+ #define MX51_ECSPI_CONFIG_SCLKCTL(cs)	(1 << ((cs) + 20))
+ 
+ #define MX51_ECSPI_INT		0x10
+@@ -642,6 +643,8 @@ static int mx51_ecspi_prepare_message(struct spi_imx_data *spi_imx,
+ 		cfg |= MX51_ECSPI_CONFIG_SSBPOL(spi->chip_select);
+ 	else
+ 		cfg &= ~MX51_ECSPI_CONFIG_SSBPOL(spi->chip_select);
++	//Added Datactl bit		
++	cfg |= MX51_ECSPI_CONFIG_DATACTL(spi->chip_select);
+ 
+ 	writel(cfg, spi_imx->base + MX51_ECSPI_CONFIG);
+ 

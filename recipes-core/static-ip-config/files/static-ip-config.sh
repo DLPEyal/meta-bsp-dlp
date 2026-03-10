@@ -56,6 +56,10 @@ Name=eth2
 Address=10.0.1.6/24
 Gateway=10.0.1.1
 IgnoreCarrierLoss=yes
+
+[Link]
+MACAddress=00:16:50:BA:DE:03
+
 EOF
 
 else
@@ -66,9 +70,16 @@ else
 Name=eth0
 
 [Network]
+DHCP=no
 Address=${ETH0_IP}/24
 Gateway=10.0.1.1
 IgnoreCarrierLoss=yes
+
+[Link]
+MACAddress=00:16:50:BA:DE:0${NUMBER}
+RequiredForOnline=no
+
+
 EOF
 
     # eth1 = 10.0.2.(3 + number)

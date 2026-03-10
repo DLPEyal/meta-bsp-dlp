@@ -1,10 +1,13 @@
 [Unit]
 Description=Configure ethtool settings on eth0
-After=network.target
+After=static-ip-config.service network-pre.target systemd-udevd.service
+Wants=network-pre.target
+ConditionPathExists=/sys/class/net/eth0
+
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c 'sleep 15 && /usr/sbin/ethtool -C eth0 rx-frames 1'
+ExecStart=/usr/sbin/ethtool -C eth0 rx-frames 1
 RemainAfterExit=yes
 
 [Install]

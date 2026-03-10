@@ -31,6 +31,9 @@ setup()
  sudo apt-get install -y exfat-fuse exfat-utils device-tree-compiler liblz4-tool mtools xxhash zstd
 
  sudo apt-get install -y qemu-system
+
+ sudo apt-get install openssh-client
+
  mkdir ~/bin
  curl http://commondatastorage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
  chmod a+x ~/bin/repo
@@ -41,19 +44,19 @@ setup()
 machine_type()
 {
         export MACHINE=$M_MACHINE
-	DISTRO=fsl-imx-wayland MACHINE=${MACHINE} source dlp-setup-release.sh
+	DISTRO=imx-dlp MACHINE=${MACHINE} source dlp-setup-release.sh
 }
 
 #define qemu type
 qemu_type()
 {
         export MACHINE=$QEMU_MACHINE
-	DISTRO=fsl-imx-wayland MACHINE=${MACHINE} source dlp-setup-release.sh
+	DISTRO=imx-dlp MACHINE=${MACHINE} source dlp-setup-release.sh
 }
 
 sanity_fix()
 {
-	file="sources/poky/meta/conf/sanity.conf"
+	file="$YOCTO_TOP/poky/meta/conf/sanity.conf"
 	line='INHERIT += "sanity"'
 	modified_line='#INHERIT += "sanity"'
 
@@ -113,7 +116,7 @@ build_image_pcb()
 {
 	machine_type
 	sanity_fix
-	bitbake -k core-image-base
+	bitbake -k imx-boot core-image-minimal
 	#fix_path
 }
 
@@ -134,7 +137,7 @@ rebuild_image_evb()
 rebuild_image_pcb()
 {
 	export PATH=/usr/bin:$PATH
-        bitbake -k core-image-base
+        bitbake -k imx-boot core-image-minimal
 }
 
 build_sdk()

@@ -1,0 +1,30 @@
+From a4fe9cb449d0bd3b7a09d9ae7316a527a363bd4e Mon Sep 17 00:00:00 2001
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Tue, 27 Jan 2026 23:38:37 +0200
+Subject: [PATCH 2/2] secboot: mandatory signature verification
+
+---
+ arch/arm/dts/imx8mp-u-boot.dtsi | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/arch/arm/dts/imx8mp-u-boot.dtsi b/arch/arm/dts/imx8mp-u-boot.dtsi
+index 120c4c4dbb1..f3e2de376d5 100644
+--- a/arch/arm/dts/imx8mp-u-boot.dtsi
++++ b/arch/arm/dts/imx8mp-u-boot.dtsi
+@@ -167,3 +167,12 @@
+ 		};
+ 	};
+ };
++/*
++ * Secure boot signature check enforcement for i.MX8MP
++ */
++
++/ {
++	signature {
++		required = "conf";
++	};
++};
+\ No newline at end of file
+-- 
+2.39.5
+

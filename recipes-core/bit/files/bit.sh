@@ -2,6 +2,6 @@
 
 # Call the bit script
 echo " Run BIT Server "
-sleep 10
+sleep 5
 bit
-exec /etc/bit.sh
+#exec /etc/bit.sh

@@ -1,5 +1,6 @@
 [Unit]
 Description=Maintenance Service
+After=static-ip-config.service network-pre.target systemd-udevd.service ethtool.service armid.service bit.service
 
 [Service]
 ExecStart=/usr/bin/maintenance.sh

@@ -1,0 +1,1304 @@
+From 74b0dfc8dc877ba8e00949b6f9b1f3645baed56e Mon Sep 17 00:00:00 2001
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Wed, 18 Feb 2026 11:11:15 +0200
+Subject: [PATCH] clear can, hdmi, sound, pwm leftovers from ARM1-3 device tree
+
+---
+ arch/arm64/boot/dts/freescale/basearm1.dts | 337 ++++-----------------
+ arch/arm64/boot/dts/freescale/basearm2.dts | 155 ++--------
+ arch/arm64/boot/dts/freescale/decoder.dts  | 336 ++++----------------
+ 3 files changed, 132 insertions(+), 696 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/basearm1.dts b/arch/arm64/boot/dts/freescale/basearm1.dts
+index 1a217e6397fb..026b8ea64146 100755
+--- a/arch/arm64/boot/dts/freescale/basearm1.dts
++++ b/arch/arm64/boot/dts/freescale/basearm1.dts
+@@ -47,40 +47,6 @@ gpt1: timer@302d0000 {
+ 	    status = "okay";
+ 	};
+ 
+-
+-	reg_can1_stby: regulator-can1-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can1-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+-	reg_can2_stby: regulator-can2-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can2-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan2_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+-	reg_usdhc2_vmmc: regulator-usdhc2 {
+-		compatible = "regulator-fixed";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_reg_usdhc2_vmmc>;
+-		regulator-name = "VSD_3V3";
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+ 	reg_audio_pwr: regulator-audio-pwr {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "audio-pwr";
+@@ -91,30 +57,6 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		status = "disabled";
+ 	};
+ 
+-	bt_sco_codec: bt_sco_codec {
+-		#sound-dai-cells = <1>;
+-		compatible = "linux,bt-sco";
+-	};
+-
+-	sound-bt-sco {
+-		compatible = "simple-audio-card";
+-		simple-audio-card,name = "bt-sco-audio";
+-		simple-audio-card,format = "dsp_a";
+-		simple-audio-card,bitclock-inversion;
+-		simple-audio-card,frame-master = <&btcpu>;
+-		simple-audio-card,bitclock-master = <&btcpu>;
+-
+-		btcpu: simple-audio-card,cpu {
+-			sound-dai = <&sai2>;
+-			dai-tdm-slot-num = <2>;
+-			dai-tdm-slot-width = <16>;
+-		};
+-
+-		simple-audio-card,codec {
+-			sound-dai = <&bt_sco_codec 1>;
+-		};
+-	};
+-
+ 	sound-hdmi {
+ 		compatible = "fsl,imx-audio-hdmi";
+ 		model = "audio-hdmi";
+@@ -130,25 +72,6 @@ sound-hdmi {
+ 		status = "disabled";
+ 	};
+ 
+-	lvds_backlight: lvds_backlight {
+-		compatible = "pwm-backlight";
+-		pwms = <&pwm2 0 100000>;
+-		status = "okay";
+-
+-		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
+-				     10 11 12 13 14 15 16 17 18 19
+-				     20 21 22 23 24 25 26 27 28 29
+-				     30 31 32 33 34 35 36 37 38 39
+-				     40 41 42 43 44 45 46 47 48 49
+-				     50 51 52 53 54 55 56 57 58 59
+-				     60 61 62 63 64 65 66 67 68 69
+-				     70 71 72 73 74 75 76 77 78 79
+-				     80 81 82 83 84 85 86 87 88 89
+-				     90 91 92 93 94 95 96 97 98 99
+-				    100>;
+-		default-brightness-level = <80>;
+-	};
+-
+ 	cbtl04gp {
+ 		compatible = "nxp,cbtl04gp";
+ 		pinctrl-names = "default";
+@@ -194,18 +117,18 @@ flash1: mt25qu256aba@3 {
+ };
+ 
+ &flexcan1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan1>;
+-	xceiver-supply = <&reg_can1_stby>;
+-	status = "okay";
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ xceiver-supply;
++	status = "disabled";
+ };
+ 
+ &flexcan2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan2>;
+-	xceiver-supply = <&reg_can2_stby>;
+-	pinctrl-assert-gpios = <&pca6416 3 GPIO_ACTIVE_HIGH>;
+-	status = "disabled";/* can2 pin conflict with pdm */
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ xceiver-supply;
++	/delete-property/ pinctrl-assert-gpios;
++	status = "disabled";
+ };
+ 
+ &A53_0 {
+@@ -225,19 +148,19 @@ &A53_3 {
+ };
+ 
+ &dsp {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &pwm1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pwm1>;
+-	status = "okay";
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	status = "disabled";
+ };
+ 
+ &pwm2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pwm2>;
+-	status = "okay";
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	status = "disabled";
+ };
+ 
+ &pwm4 {
+@@ -423,33 +346,6 @@ &i2c2 {
+ 	pinctrl-0 = <&pinctrl_i2c2>;
+ 	status = "okay";
+ 
+-	adv_bridge: adv7535@3d {
+-		compatible = "adi,adv7535";
+-		reg = <0x3d>;
+-		adi,addr-cec = <0x3b>;
+-		adi,dsi-lanes = <4>;
+-		status = "okay";
+-
+-		port {
+-			adv7535_from_dsim: endpoint {
+-				remote-endpoint = <&dsim_to_adv7535>;
+-			};
+-		};
+-	};
+-
+-	lvds_bridge: lvds-to-hdmi-bridge@4c {
+-		compatible = "ite,it6263";
+-		reg = <0x4c>;
+-		reset-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;
+-
+-		port {
+-			it6263_in: endpoint {
+-				remote-endpoint = <&lvds_out>;
+-			};
+-		};
+-	};
+-
+-
+ 	ptn5110: tcpc@50 {
+ 		compatible = "nxp,ptn5110";
+ 		pinctrl-names = "default";
+@@ -520,71 +416,47 @@ &i2c4 {
+ };
+ 
+ &irqsteer_hdmi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmi_blk_ctrl {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmi_pavi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmiphy {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &lcdif1 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &lcdif2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &lcdif3 {
+-	status = "okay";
+-
+-	thres-low  = <1 2>;             /* (FIFO * 1 / 2) */
+-	thres-high = <3 4>;             /* (FIFO * 3 / 4) */
++	status = "disabled";
+ };
+ 
+ &ldb {
+-	status = "okay";
+-
+-	lvds-channel@0 {
+-		fsl,data-mapping = "jeida";
+-		fsl,data-width = <24>;
+-		status = "okay";
+-
+-		port@1 {
+-			reg = <1>;
+-
+-			lvds_out: endpoint {
+-				remote-endpoint = <&it6263_in>;
+-			};
+-		};
+-	};
++	status = "disabled";
+ };
+ 
+ &ldb_phy {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &mipi_dsi {
+-	status = "okay";
+-
+-	port@1 {
+-		dsim_to_adv7535: endpoint {
+-			remote-endpoint = <&adv7535_from_dsim>;
+-			attach-bridge;
+-		};
+-	};
++	status = "disabled";
+ };
+ 
+ &snvs_pwrkey {
+@@ -614,25 +486,22 @@ &pcie_phy{
+ 
+ &sai2 {
+ 	#sound-dai-cells = <0>;
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_sai2>;
+-	assigned-clocks = <&clk IMX8MP_CLK_SAI2>;
+-	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+-	assigned-clock-rates = <12288000>;
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ assigned-clocks;
++	/delete-property/ assigned-clock-parents;
++	/delete-property/ assigned-clock-rates;
+ 	status = "disabled";
+ };
+ 
+ &sai3 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_sai3>;
+-	assigned-clocks = <&clk IMX8MP_CLK_SAI3>;
+-	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+-	assigned-clock-rates = <12288000>;
+-	clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_IPG>, <&clk IMX8MP_CLK_DUMMY>,
+-		 <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_MCLK1>, <&clk IMX8MP_CLK_DUMMY>,
+-		 <&clk IMX8MP_CLK_DUMMY>;
+-	clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
+-	fsl,sai-mclk-direction-output;
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ assigned-clocks;
++	/delete-property/ assigned-clock-parents;
++	/delete-property/ assigned-clock-rates;
++	/delete-property/ clocks;
++	/delete-property/ clock-names;
+ 	status = "disabled";
+ };
+ 
+@@ -706,8 +575,8 @@ &usb3_1 {
+ };
+ 
+ &usb_dwc3_1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_usb1_vbus>;
++    /delete-property/ pinctrl-names;
++    /delete-property/ pinctrl-0;
+ 	dr_mode = "host";
+ 	status = "okay";
+ };
+@@ -773,16 +642,6 @@ MX8MP_IOMUXC_SD2_WP__GPIO2_IO20            0x00000106
+ 		>;
+ 	};
+ 
+-	pinctrl_pwm1: pwm1grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+-	pinctrl_pwm2: pwm2grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+ 	pinctrl_pwm4: pwm4grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_SAI5_RXFS__PWM4_OUT	0x116
+@@ -845,32 +704,6 @@ MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02		0x10
+ 		>;
+ 	};
+ 
+-	pinctrl_flexcan1: flexcan1grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_RX__CAN1_RX          0x154
+-			MX8MP_IOMUXC_SPDIF_TX__CAN1_TX          0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan2: flexcan2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI5_MCLK__CAN2_RX         0x154
+-			MX8MP_IOMUXC_SAI5_RXD3__CAN2_TX         0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan1_reg: flexcan1reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO05  0x154   /* CAN1_STBY */
+-		>;
+-	};
+-
+-	pinctrl_flexcan2_reg: flexcan2reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
+-		>;
+-	};
+-
+ 	pinctrl_flexspi0: flexspi0grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_NAND_CE2_B__FLEXSPI_B_SS0_B   0x00000106
+@@ -918,55 +751,12 @@ MX8MP_IOMUXC_I2C4_SDA__I2C4_SDA            0x400001c2
+ 		>;
+ 	};
+ 
+-	pinctrl_mipi_dsi_en: mipi_dsi_en {
+-		fsl,pins = <
+-
+-		>;
+-	};
+-
+-	pinctrl_pcie: pciegrp {
+-		fsl,pins = <
+-		/* No PCIe - pins not configured */
+-		>;
+-	};
+-
+ 	pinctrl_pmic: pmicgrp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05	0x00000146
+ 		>;
+ 	};
+ 
+-	pinctrl_reg_usdhc2_vmmc: regusdhc2vmmcgrp {
+-		fsl,pins = <
+-
+-		>;
+-	};
+-
+-
+-
+-	pinctrl_sai2: sai2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_TXC__AUDIOMIX_SAI2_TX_BCLK	0xd6
+-			MX8MP_IOMUXC_SAI2_TXFS__AUDIOMIX_SAI2_TX_SYNC	0xd6
+-			MX8MP_IOMUXC_SAI2_TXD0__AUDIOMIX_SAI2_TX_DATA00	0xd6
+-			MX8MP_IOMUXC_SAI2_RXD0__AUDIOMIX_SAI2_RX_DATA00	0xd6
+-		>;
+-	};
+-
+-	pinctrl_sai3: sai3grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI3_TXFS__AUDIOMIX_SAI3_TX_SYNC	0xd6
+-			MX8MP_IOMUXC_SAI3_RXD__AUDIOMIX_SAI3_RX_DATA00	0xd6
+-			MX8MP_IOMUXC_SAI3_MCLK__AUDIOMIX_SAI3_MCLK	0xd6
+-			MX8MP_IOMUXC_SAI3_RXFS__GPIO4_IO28		0xd6
+-		>;
+-	};
+-
+-	pinctrl_i2c2_synaptics_dsx_io: synaptics_dsx_iogrp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+ 	pinctrl_uart1: uart1grp {
+ 		fsl,pins = <
+                   
+@@ -995,11 +785,6 @@ MX8MP_IOMUXC_UART2_TXD__UART2_DCE_TX       0x00000106
+ 		>;
+ 	};
+ 
+-	pinctrl_usb1_vbus: usb1grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+ 	pinctrl_uart3: uart3grp {
+ 		fsl,pins = <
+ 		MX8MP_IOMUXC_UART3_RXD__UART3_DCE_RX       0x00000106
+@@ -1031,67 +816,53 @@ MX8MP_IOMUXC_GPIO1_IO02__WDOG1_WDOG_B	0x166
+ 		>;
+ 	};
+ 
+-	pinctrl_csi0_pwn: csi0_pwn_grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+-	pinctrl_csi0_rst: csi0_rst_grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+-	
+ };
+ 
+ &vpu_g1 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &vpu_g2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &vpu_vc8000e {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &vpu_v4l2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &gpu_3d {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &gpu_2d {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &ml_vipsi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &mix_gpu_ml {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+-
+-
+-
+ &cameradev {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &isi_0 {
+-	status = "okay";
++	status = "disabled";
+ 
+ 	cap_device {
+-		status = "okay";
++		status = "disabled";
+ 	};
+ 
+ 	m2m_device {
+-		status = "okay";
++		status = "disabled";
+ 	};
+ };
+ 
+@@ -1099,6 +870,6 @@ &isi_1 {
+ 	status = "disabled";
+ 
+ 	cap_device {
+-		status = "okay";
++		status = "disabled";
+ 	};
+ };
+diff --git a/arch/arm64/boot/dts/freescale/basearm2.dts b/arch/arm64/boot/dts/freescale/basearm2.dts
+index 4c2a2fe15c06..0916f83c29a5 100755
+--- a/arch/arm64/boot/dts/freescale/basearm2.dts
++++ b/arch/arm64/boot/dts/freescale/basearm2.dts
+@@ -47,31 +47,6 @@ gpt1: timer@302d0000 {
+ 	    status = "okay";
+ 	};
+ 
+-
+-	reg_can1_stby: regulator-can1-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can1-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-		status = "disabled";
+-	};
+-
+-	reg_can2_stby: regulator-can2-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can2-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan2_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-		status = "disabled";
+-	};
+-
+ 	reg_audio_pwr: regulator-audio-pwr {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "audio-pwr";
+@@ -82,34 +57,6 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		status = "disabled";
+ 	};
+ 
+-	bt_sco_codec: bt_sco_codec {
+-		#sound-dai-cells = <1>;
+-		compatible = "linux,bt-sco";
+-		status = "disabled";
+-	};
+-
+-	sound-bt-sco {
+-		compatible = "simple-audio-card";
+-		simple-audio-card,name = "bt-sco-audio";
+-		simple-audio-card,format = "dsp_a";
+-		simple-audio-card,bitclock-inversion;
+-		simple-audio-card,frame-master = <&btcpu>;
+-		simple-audio-card,bitclock-master = <&btcpu>;
+-		status = "disabled";
+-		
+-		btcpu: simple-audio-card,cpu {
+-			sound-dai = <&sai2>;
+-			dai-tdm-slot-num = <2>;
+-			dai-tdm-slot-width = <16>;
+-			status = "disabled";
+-		};
+-
+-		simple-audio-card,codec {
+-			sound-dai = <&bt_sco_codec 1>;
+-			status = "disabled";
+-		};
+-	};
+-
+ 	sound-hdmi {
+ 		compatible = "fsl,imx-audio-hdmi";
+ 		model = "audio-hdmi";
+@@ -170,18 +117,18 @@ flash1: mt25qu256aba@3 {
+ };
+ 
+ &flexcan1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan1>;
+-	xceiver-supply = <&reg_can1_stby>;
+-	status = "okay";
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ xceiver-supply;
++	status = "disabled";
+ };
+ 
+ &flexcan2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan2>;
+-	xceiver-supply = <&reg_can2_stby>;
+-	pinctrl-assert-gpios = <&pca6416 3 GPIO_ACTIVE_HIGH>;
+-	status = "disabled";/* can2 pin conflict with pdm */
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ xceiver-supply;
++	/delete-property/ pinctrl-assert-gpios;
++	status = "disabled";
+ };
+ 
+ &A53_0 {
+@@ -201,7 +148,7 @@ &A53_3 {
+ };
+ 
+ &dsp {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ 
+@@ -495,25 +442,22 @@ &pcie_phy{
+ 
+ &sai2 {
+ 	#sound-dai-cells = <0>;
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_sai2>;
+-	assigned-clocks = <&clk IMX8MP_CLK_SAI2>;
+-	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+-	assigned-clock-rates = <12288000>;
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ assigned-clocks;
++	/delete-property/ assigned-clock-parents;
++	/delete-property/ assigned-clock-rates;
+ 	status = "disabled";
+ };
+ 
+ &sai3 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_sai3>;
+-	assigned-clocks = <&clk IMX8MP_CLK_SAI3>;
+-	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+-	assigned-clock-rates = <12288000>;
+-	clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_IPG>, <&clk IMX8MP_CLK_DUMMY>,
+-		 <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_MCLK1>, <&clk IMX8MP_CLK_DUMMY>,
+-		 <&clk IMX8MP_CLK_DUMMY>;
+-	clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
+-	fsl,sai-mclk-direction-output;
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ assigned-clocks;
++	/delete-property/ assigned-clock-parents;
++	/delete-property/ assigned-clock-rates;
++	/delete-property/ clocks;
++	/delete-property/ clock-names;
+ 	status = "disabled";
+ };
+ 
+@@ -587,13 +531,12 @@ &usb3_1 {
+ };
+ 
+ &usb_dwc3_1 {
++    /delete-property/ pinctrl-names;
++    /delete-property/ pinctrl-0;
+ 	dr_mode = "host";
+ 	status = "okay";
+ };
+ 
+-
+-
+-
+ &wdog1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_wdog>;
+@@ -700,32 +643,6 @@ MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02		0x10
+ 		>;
+ 	};
+ 
+-	pinctrl_flexcan1: flexcan1grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_RX__CAN1_RX          0x154
+-			MX8MP_IOMUXC_SPDIF_TX__CAN1_TX          0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan2: flexcan2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI5_MCLK__CAN2_RX         0x154
+-			MX8MP_IOMUXC_SAI5_RXD3__CAN2_TX         0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan1_reg: flexcan1reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO05  0x154   /* CAN1_STBY */
+-		>;
+-	};
+-
+-	pinctrl_flexcan2_reg: flexcan2reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
+-		>;
+-	};
+-
+ 	pinctrl_flexspi0: flexspi0grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_NAND_CE2_B__FLEXSPI_B_SS0_B   0x00000106
+@@ -780,27 +697,6 @@ MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04	0x00000146
+ 		>;
+ 	};
+ 
+-
+-
+-	
+-	pinctrl_sai2: sai2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_TXC__AUDIOMIX_SAI2_TX_BCLK	0xd6
+-			MX8MP_IOMUXC_SAI2_TXFS__AUDIOMIX_SAI2_TX_SYNC	0xd6
+-			MX8MP_IOMUXC_SAI2_TXD0__AUDIOMIX_SAI2_TX_DATA00	0xd6
+-			MX8MP_IOMUXC_SAI2_RXD0__AUDIOMIX_SAI2_RX_DATA00	0xd6
+-		>;
+-	};
+-
+-	pinctrl_sai3: sai3grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI3_TXFS__AUDIOMIX_SAI3_TX_SYNC	0xd6
+-			MX8MP_IOMUXC_SAI3_RXD__AUDIOMIX_SAI3_RX_DATA00	0xd6
+-			MX8MP_IOMUXC_SAI3_MCLK__AUDIOMIX_SAI3_MCLK	0xd6
+-			MX8MP_IOMUXC_SAI3_RXFS__GPIO4_IO28		0xd6
+-		>;
+-	};
+-
+ 	pinctrl_uart1: uart1grp {
+ 		fsl,pins = <
+                   
+@@ -882,9 +778,6 @@ &mix_gpu_ml {
+ 	status = "disabled";
+ };
+ 
+-
+-
+-
+ &cameradev {
+ 	status = "disabled";
+ };
+diff --git a/arch/arm64/boot/dts/freescale/decoder.dts b/arch/arm64/boot/dts/freescale/decoder.dts
+index 0620574aed8f..59f870fd2156 100755
+--- a/arch/arm64/boot/dts/freescale/decoder.dts
++++ b/arch/arm64/boot/dts/freescale/decoder.dts
+@@ -47,40 +47,6 @@ gpt1: timer@302d0000 {
+ 	    status = "okay";
+ 	};
+ 
+-
+-	reg_can1_stby: regulator-can1-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can1-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+-	reg_can2_stby: regulator-can2-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can2-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan2_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+-	reg_usdhc2_vmmc: regulator-usdhc2 {
+-		compatible = "regulator-fixed";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_reg_usdhc2_vmmc>;
+-		regulator-name = "VSD_3V3";
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+ 	reg_audio_pwr: regulator-audio-pwr {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "audio-pwr";
+@@ -91,30 +57,6 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		status = "disabled";
+ 	};
+ 
+-	bt_sco_codec: bt_sco_codec {
+-		#sound-dai-cells = <1>;
+-		compatible = "linux,bt-sco";
+-	};
+-
+-	sound-bt-sco {
+-		compatible = "simple-audio-card";
+-		simple-audio-card,name = "bt-sco-audio";
+-		simple-audio-card,format = "dsp_a";
+-		simple-audio-card,bitclock-inversion;
+-		simple-audio-card,frame-master = <&btcpu>;
+-		simple-audio-card,bitclock-master = <&btcpu>;
+-
+-		btcpu: simple-audio-card,cpu {
+-			sound-dai = <&sai2>;
+-			dai-tdm-slot-num = <2>;
+-			dai-tdm-slot-width = <16>;
+-		};
+-
+-		simple-audio-card,codec {
+-			sound-dai = <&bt_sco_codec 1>;
+-		};
+-	};
+-
+ 	sound-hdmi {
+ 		compatible = "fsl,imx-audio-hdmi";
+ 		model = "audio-hdmi";
+@@ -130,25 +72,6 @@ sound-hdmi {
+ 		status = "disabled";
+ 	};
+ 
+-	lvds_backlight: lvds_backlight {
+-		compatible = "pwm-backlight";
+-		pwms = <&pwm2 0 100000>;
+-		status = "okay";
+-
+-		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
+-				     10 11 12 13 14 15 16 17 18 19
+-				     20 21 22 23 24 25 26 27 28 29
+-				     30 31 32 33 34 35 36 37 38 39
+-				     40 41 42 43 44 45 46 47 48 49
+-				     50 51 52 53 54 55 56 57 58 59
+-				     60 61 62 63 64 65 66 67 68 69
+-				     70 71 72 73 74 75 76 77 78 79
+-				     80 81 82 83 84 85 86 87 88 89
+-				     90 91 92 93 94 95 96 97 98 99
+-				    100>;
+-		default-brightness-level = <80>;
+-	};
+-
+ 	cbtl04gp {
+ 		compatible = "nxp,cbtl04gp";
+ 		pinctrl-names = "default";
+@@ -184,18 +107,18 @@ flash0: mt25qu256aba@2 {
+ };
+ 
+ &flexcan1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan1>;
+-	xceiver-supply = <&reg_can1_stby>;
+-	status = "okay";
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ xceiver-supply;
++	status = "disabled";
+ };
+ 
+ &flexcan2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan2>;
+-	xceiver-supply = <&reg_can2_stby>;
+-	pinctrl-assert-gpios = <&pca6416 3 GPIO_ACTIVE_HIGH>;
+-	status = "disabled";/* can2 pin conflict with pdm */
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ xceiver-supply;
++	/delete-property/ pinctrl-assert-gpios;
++	status = "disabled";
+ };
+ 
+ &A53_0 {
+@@ -215,19 +138,19 @@ &A53_3 {
+ };
+ 
+ &dsp {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &pwm1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pwm1>;
+-	status = "okay";
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	status = "disabled";
+ };
+ 
+ &pwm2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pwm2>;
+-	status = "okay";
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	status = "disabled";
+ };
+ 
+ &pwm4 {
+@@ -433,33 +356,6 @@ &i2c2 {
+ 	pinctrl-0 = <&pinctrl_i2c2>;
+ 	status = "okay";
+ 
+-	adv_bridge: adv7535@3d {
+-		compatible = "adi,adv7535";
+-		reg = <0x3d>;
+-		adi,addr-cec = <0x3b>;
+-		adi,dsi-lanes = <4>;
+-		status = "okay";
+-
+-		port {
+-			adv7535_from_dsim: endpoint {
+-				remote-endpoint = <&dsim_to_adv7535>;
+-			};
+-		};
+-	};
+-
+-	lvds_bridge: lvds-to-hdmi-bridge@4c {
+-		compatible = "ite,it6263";
+-		reg = <0x4c>;
+-		reset-gpios = <&gpio1 20 GPIO_ACTIVE_LOW>;
+-
+-		port {
+-			it6263_in: endpoint {
+-				remote-endpoint = <&lvds_out>;
+-			};
+-		};
+-	};
+-
+-
+ 	ptn5110: tcpc@50 {
+ 		compatible = "nxp,ptn5110";
+ 		pinctrl-names = "default";
+@@ -517,71 +413,47 @@ pca6416: gpio@20 {
+ };
+ 
+ &irqsteer_hdmi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmi_blk_ctrl {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmi_pavi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &hdmiphy {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &lcdif1 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &lcdif2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &lcdif3 {
+-	status = "okay";
+-
+-	thres-low  = <1 2>;             /* (FIFO * 1 / 2) */
+-	thres-high = <3 4>;             /* (FIFO * 3 / 4) */
++	status = "disabled";
+ };
+ 
+ &ldb {
+-	status = "okay";
+-
+-	lvds-channel@0 {
+-		fsl,data-mapping = "jeida";
+-		fsl,data-width = <24>;
+-		status = "okay";
+-
+-		port@1 {
+-			reg = <1>;
+-
+-			lvds_out: endpoint {
+-				remote-endpoint = <&it6263_in>;
+-			};
+-		};
+-	};
++	status = "disabled";
+ };
+ 
+ &ldb_phy {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &mipi_dsi {
+-	status = "okay";
+-
+-	port@1 {
+-		dsim_to_adv7535: endpoint {
+-			remote-endpoint = <&adv7535_from_dsim>;
+-			attach-bridge;
+-		};
+-	};
++	status = "disabled";
+ };
+ 
+ &snvs_pwrkey {
+@@ -611,25 +483,22 @@ &pcie_phy{
+ 
+ &sai2 {
+ 	#sound-dai-cells = <0>;
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_sai2>;
+-	assigned-clocks = <&clk IMX8MP_CLK_SAI2>;
+-	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+-	assigned-clock-rates = <12288000>;
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ assigned-clocks;
++	/delete-property/ assigned-clock-parents;
++	/delete-property/ assigned-clock-rates;
+ 	status = "disabled";
+ };
+ 
+ &sai3 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_sai3>;
+-	assigned-clocks = <&clk IMX8MP_CLK_SAI3>;
+-	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+-	assigned-clock-rates = <12288000>;
+-	clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_IPG>, <&clk IMX8MP_CLK_DUMMY>,
+-		 <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_MCLK1>, <&clk IMX8MP_CLK_DUMMY>,
+-		 <&clk IMX8MP_CLK_DUMMY>;
+-	clock-names = "bus", "mclk0", "mclk1", "mclk2", "mclk3";
+-	fsl,sai-mclk-direction-output;
++	/delete-property/ pinctrl-names;
++	/delete-property/ pinctrl-0;
++	/delete-property/ assigned-clocks;
++	/delete-property/ assigned-clock-parents;
++	/delete-property/ assigned-clock-rates;
++	/delete-property/ clocks;
++	/delete-property/ clock-names;
+ 	status = "disabled";
+ };
+ 
+@@ -704,8 +573,8 @@ &usb3_1 {
+ };
+ 
+ &usb_dwc3_1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_usb1_vbus>;
++    /delete-property/ pinctrl-names;
++    /delete-property/ pinctrl-0;
+ 	dr_mode = "host";
+ 	status = "okay";
+ };
+@@ -796,16 +665,6 @@ MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09		0x1c4
+ 		>;
+ 	};
+ 
+-	pinctrl_pwm1: pwm1grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+-	pinctrl_pwm2: pwm2grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+ 	pinctrl_pwm4: pwm4grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_SAI5_RXFS__PWM4_OUT	0x116
+@@ -896,32 +755,6 @@ MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02		0x10
+ 		>;
+ 	};
+ 
+-	pinctrl_flexcan1: flexcan1grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_RX__CAN1_RX          0x154
+-			MX8MP_IOMUXC_SPDIF_TX__CAN1_TX          0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan2: flexcan2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI5_MCLK__CAN2_RX         0x154
+-			MX8MP_IOMUXC_SAI5_RXD3__CAN2_TX         0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan1_reg: flexcan1reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO05  0x154   /* CAN1_STBY */
+-		>;
+-	};
+-
+-	pinctrl_flexcan2_reg: flexcan2reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
+-		>;
+-	};
+-
+ 	pinctrl_flexspi0: flexspi0grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_NAND_ALE__FLEXSPI_A_SCLK           0x1c2
+@@ -960,55 +793,12 @@ MX8MP_IOMUXC_I2C3_SDA__I2C3_SDA		0x400001c2
+ 		>;
+ 	};
+ 
+-	pinctrl_mipi_dsi_en: mipi_dsi_en {
+-		fsl,pins = <
+-
+-		>;
+-	};
+-
+-	pinctrl_pcie: pciegrp {
+-		fsl,pins = <
+-		/* No PCIe - pins not configured */
+-		>;
+-	};
+-
+ 	pinctrl_pmic: pmicgrp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x00000146
+ 		>;
+ 	};
+ 
+-	pinctrl_reg_usdhc2_vmmc: regusdhc2vmmcgrp {
+-		fsl,pins = <
+-
+-		>;
+-	};
+-
+-
+-
+-	pinctrl_sai2: sai2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_TXC__AUDIOMIX_SAI2_TX_BCLK	0xd6
+-			MX8MP_IOMUXC_SAI2_TXFS__AUDIOMIX_SAI2_TX_SYNC	0xd6
+-			MX8MP_IOMUXC_SAI2_TXD0__AUDIOMIX_SAI2_TX_DATA00	0xd6
+-			MX8MP_IOMUXC_SAI2_RXD0__AUDIOMIX_SAI2_RX_DATA00	0xd6
+-		>;
+-	};
+-
+-	pinctrl_sai3: sai3grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI3_TXFS__AUDIOMIX_SAI3_TX_SYNC	0xd6
+-			MX8MP_IOMUXC_SAI3_RXD__AUDIOMIX_SAI3_RX_DATA00	0xd6
+-			MX8MP_IOMUXC_SAI3_MCLK__AUDIOMIX_SAI3_MCLK	0xd6
+-			MX8MP_IOMUXC_SAI3_RXFS__GPIO4_IO28		0xd6
+-		>;
+-	};
+-
+-	pinctrl_i2c2_synaptics_dsx_io: synaptics_dsx_iogrp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+ 	pinctrl_uart1: uart1grp {
+ 		fsl,pins = <
+                   
+@@ -1037,10 +827,6 @@ MX8MP_IOMUXC_SAI3_TXFS__UART2_DTE_TX       0x00000106
+ 		>;
+ 	};
+ 
+-	pinctrl_usb1_vbus: usb1grp {
+-		fsl,pins = <
+-		>;
+-	};
+ 
+ 	pinctrl_uart3: uart3grp {
+ 		fsl,pins = <
+@@ -1073,67 +859,53 @@ MX8MP_IOMUXC_GPIO1_IO02__WDOG1_WDOG_B	0x166
+ 		>;
+ 	};
+ 
+-	pinctrl_csi0_pwn: csi0_pwn_grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+-	pinctrl_csi0_rst: csi0_rst_grp {
+-		fsl,pins = <
+-		>;
+-	};
+-
+-	
+ };
+ 
+ &vpu_g1 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &vpu_g2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &vpu_vc8000e {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &vpu_v4l2 {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &gpu_3d {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &gpu_2d {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &ml_vipsi {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &mix_gpu_ml {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+-
+-
+-
+ &cameradev {
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &isi_0 {
+-	status = "okay";
++	status = "disabled";
+ 
+ 	cap_device {
+-		status = "okay";
++		status = "disabled";
+ 	};
+ 
+ 	m2m_device {
+-		status = "okay";
++		status = "disabled";
+ 	};
+ };
+ 
+@@ -1141,6 +913,6 @@ &isi_1 {
+ 	status = "disabled";
+ 
+ 	cap_device {
+-		status = "okay";
++		status = "disabled";
+ 	};
+ };
+-- 
+2.39.5
+

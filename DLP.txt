@@ -16,67 +16,94 @@ FB: ucmd setexpr armid $id + $b0
 FB: ucmd setenv armid $armid
 FB: ucmd echo ARMID=$armid
 
-FB: ucmd setexpr r *0x30210008
-FB: ucmd setexpr b0 $r \& 0x1000
-FB: ucmd setexpr b0 $b0 / 0x1000
-FB: ucmd setexpr b1 $r \& 0x10000
-FB: ucmd setexpr b1 $b1 / 0x10000
-FB: ucmd setexpr id $b1 \* 2
-FB: ucmd setexpr armid $id + $b0
-FB: ucmd setenv armid $armid
-FB: ucmd echo ARMID=$armid
+#Set FIT configuration name based on armid (FLASH-TIME DECISION)
+FB[-t 100000]: ucmd if test "${armid}" = 1; then setenv fit_config conf-freescale_basearm1.dtb; echo "Selected config: Base ARM#1"; else echo "armid is not 1, skipping Base Arm#1 DTB"; fi
+FB[-t 100000]: ucmd if test "${armid}" = 2; then setenv fit_config conf-freescale_basearm2.dtb; echo "Selected config: Base ARM#2"; else echo "armid is not 2, skipping Base Arm#2 DTB"; fi
+FB[-t 100000]: ucmd if test "${armid}" = 3; then setenv fit_config conf-freescale_decoder.dtb; echo "Selected config: Decoder"; else echo "armid is not 3, skipping Decoder DTB"; fi
+# Verify a configuration was selected (ARM#1-3) and exit with failure if not
+FB[-t 100000]: ucmd env exists fit_config
 
-# Set the start address & erase MTP memory
+# Download FIT Image to DDR
+FB: ucmd setenv fastboot_buffer 0x60000000
+FB: ucmd setenv fastboot_size 0x10000000
+FB: download -f fitImage-core-image-minimal-dlp-dlp
+FB: ucmd setenv fitimage_size ${filesize}
+FB: ucmd echo "=== FIT Image size: 0x${fitimage_size} bytes ==="
+
+
+# if we are on ARM#3/decoder - there is no additional MTP for backup image
+# on ARM#1-2 dual image mode is set
+FB[-t 100000]: ucmd if test "${armid}" != "3"; then setenv dual_image_mode 1; else setenv dual_image_mode; fi; true
+
+# Uncomment this to bypass second image flashing
+#FB: ucmd setenv dual_image_mode; echo "=== DEBUG:Single image mode - no backup image ===";
+
+FB: ucmd echo "=== Flashing Primary FIT Image at offset 0x0 to MTP 1 ==="
 FB: ucmd sf probe 2 85000000 0
+FB: ucmd sf protect unlock 0 0 2
 #FB[-t 1000000]: ucmd sf erase 0x0 0x8000000
+FB[-t 1000000]: ucmd sf update ${fastboot_buffer} 0x0 ${fitimage_size}
+FB: ucmd echo "=== successfully flashed ==="
 
-# Load Device Tree (DTB) to DDR at 0x40300000
+# If dual-image mode is enabled, flash backup image
+FB[-t 1000000]: ucmd if test "${dual_image_mode}" = "1"; then echo "=== Flashing Backup FIT Image at offset 0x0 to MTP 2 ==="; sf probe 3 85000000 0; sf protect unlock 0 0 3; sf update ${fastboot_buffer} 0x0 ${fitimage_size}; echo "Backup FIT Image written successfully"; else echo "=== SKIPPING Backup Image (single image mode) ==="; fi
 
-FB: ucmd setenv fastboot_buffer 0x40300000
-FB: ucmd setenv fastboot_buffer_decoder 0x40300000
-FB: download -f decoder.dtb
-FB: ucmd setenv dtb_size_decoder ${filesize}
-FB: ucmd setenv fastboot_buffer_base_arm1 0x40310000
-FB: ucmd setenv fastboot_buffer 0x40310000
-FB: download -f basearm1.dtb
-FB: ucmd setenv dtb_size_base_arm1 ${filesize}
-FB: ucmd setenv fastboot_buffer_base_arm2 0x40320000
-FB: ucmd setenv fastboot_buffer 0x40320000
-FB: download -f basearm2.dtb
-FB: ucmd setenv dtb_size_base_arm2 ${filesize}
+# Set Load Addresses for FIT Components
+FB: ucmd setenv kernel_addr_r 0x44000000
+FB: ucmd setenv fdt_addr_r 0x50000000
+FB: ucmd setenv ramdisk_addr_r 0x51000000
 
-FB[-t 100000]:  ucmd if test $armid = 3; then sf update ${fastboot_buffer_decoder} 0x0 ${dtb_size_decoder}; setenv dtb_size ${dtb_size_decoder}; echo "Decoder DTB"; else echo "armid is not 3, skipping Decoder DTB"; fi
-FB[-t 100000]:  ucmd if test $armid = 2; then sf update ${fastboot_buffer_base_arm2} 0x0 ${dtb_size_base_arm2};setenv dtb_size ${dtb_size_base_arm2}; echo "Base ARM#2 DTB"; else echo "armid is not 2, skipping Base Arm#1 DTB"; fi
-FB[-t 100000]:  ucmd if test $armid = 1; then sf update ${fastboot_buffer_base_arm1} 0x0 ${dtb_size_base_arm1}; setenv dtb_size ${dtb_size_base_arm1}; echo "Base ARM#1 DTB"; else echo "armid is not 1, skipping Base Arm#2 DTB"; fi
-
-FB: ucmd echo DTB loaded to DDR at 0x40300000
-
-# Load Kernel to DDR at 0x40400000
-FB: ucmd setenv fastboot_buffer 0x40400000
-FB: download -f Image
-FB: ucmd setenv kernel_size ${filesize}
-FB[-t 100000]: ucmd sf update ${fastboot_buffer} 0x20000 ${filesize}
-FB: ucmd echo Kernel loaded to DDR at 0x40400000
-
-# Load Initramfs to DDR at 0x43000000
-FB: ucmd setenv fastboot_buffer 0x43000000
-FB: download -f core-image-base-dlp.cpio.gz
-FB: ucmd setenv initramfs_size ${filesize}
-FB[-t 1000000]: ucmd sf update ${fastboot_buffer} 0x3020000 ${filesize}
-FB: ucmd echo Initramfs loaded to DDR at 0x43000000
+# Load address for reading fitImage from flash to DDR
+FB: ucmd setenv fitimage_addr_r 0x60000000
 
 #Set Prog_En testing
-FB: ucmd setenv prog_en_test 'setexpr r *0x30200008; if test ${armid} = 3; then setexpr b0 $r \\\& 0x400; setexpr b0 $b0 / 0x400; else setexpr b0 $r \\\& 0x200; setexpr b0 $b0 / 0x200; fi; echo ID ARM#${armid} PROG_EN=$b0; if test $b0 = 0; then echo Locking;sf probe 2 85000000 0; sf protect lock 0 0; else echo Not locking; fi'
+FB: ucmd setenv prog_en_test 'setexpr r *0x30200008; if test ${armid} = 3; then setexpr b0 $r \\\& 0x400; setexpr b0 $b0 / 0x400; else setexpr b0 $r \\\& 0x200; setexpr b0 $b0 / 0x200; fi; echo ID ARM#${armid} PROG_EN=$b0; if test $b0 = 1; then if test ${armid} = 3; then echo Operational state;sf probe 2 85000000; sf protect lock 0 0 2; else echo Operational state;sf probe 2 85000000; sf protect lock 0 0 2; sf protect lock 0 0 3; fi;  else if test ${armid} = 3; then echo Programming state; sf probe 2 85000000; sf protect unlock 0 0 2; else echo Programming state; sf probe 2 85000000; sf protect unlock 0 0 2; sf protect unlock 0 0 3; fi; fi'
 
 # Set boot arguments
 FB: ucmd setenv bootargs "console=ttymxc1,115200 root=/dev/ram0 rdinit=/sbin/init"
-FB: ucmd setenv bootcmd 'sf probe 2 85000000 0; sf read 0x40300000 0x0 ${dtb_size}; echo DTB read to DDR at 0x40300000; sf read 0x40400000 0x20000 ${kernel_size}; echo Kernel read to DDR at 0x40400000; sf read 0x43000000 0x3020000 ${initramfs_size}; echo Initramfs read to DDR at 0x43000000;run prog_en_test; booti 0x40400000 0x43000000:${initramfs_size} 0x40300000'
-#FB: ucmd booti 0x40400000 0x43000000:${initramfs_size} 0x40300000
+
+# Step 12: Create Boot Scripts
+# -----------------------------------------------------------------------------
+# get_image_size: load fitImage header start, check magic constant and get fitImage size
+FB: ucmd setenv get_image_size 'sf read ${fitimage_addr_r} 0x0 0x10; setexpr magic *${fitimage_addr_r}; if test ${magic} != edfe0dd0; then echo "ERROR: No valid FIT image (magic=${magic})"; false; else setexpr tmp ${fitimage_addr_r} + 0x04; setexpr.b b0 *${tmp}; setexpr tmp ${tmp} + 1; setexpr.b b1 *${tmp}; setexpr tmp ${tmp} + 1; setexpr.b b2 *${tmp}; setexpr tmp ${tmp} + 1; setexpr.b b3 *${tmp}; setexpr tmp ${fitimage_addr_r} + 0x200; mw.b ${tmp} ${b3} 1; setexpr tmp ${tmp} + 1; mw.b ${tmp} ${b2} 1; setexpr tmp ${tmp} + 1; mw.b ${tmp} ${b1} 1; setexpr tmp ${tmp} + 1; mw.b ${tmp} ${b0} 1; setexpr tmp ${fitimage_addr_r} + 0x200; setexpr fitimage_size *${tmp}; if test ${fitimage_size} -gt 10000000; then echo "ERROR: fitImage size greater than 256 Mb (MTP size)"; false; else true; fi; fi'
+
+# load_primary: Load primary image from flash to DDR (at full QSPI speed)
+FB: ucmd setenv load_primary 'echo "Loading PRIMARY image from flash to DDR..."; sf probe 2 85000000 0; if run get_image_size; then sf read ${fitimage_addr_r} 0x0 ${fitimage_size}; echo "Primary image loaded to ${fitimage_addr_r}"; true; else false; fi'
+
+# load_backup: Load backup image from flash to DDR (at full QSPI speed)
+FB: ucmd setenv load_backup 'echo "Loading BACKUP image from flash to DDR..."; sf probe 3 85000000 0; if run get_image_size; then sf read ${fitimage_addr_r} 0x0 ${fitimage_size}; echo "Backup image loaded to ${fitimage_addr_r}"; true; else false; fi'
+
+# verify_image: Verify FIT image signature using bootm start
+# bootm start verifies the configuration signature without actually booting
+# Returns success (0) if signature valid, failure otherwise
+FB: ucmd setenv verify_image 'echo "Verifying FIT image signature..."; if bootm start ${fitimage_addr_r}#${fit_config}; then echo "Verification PASSED"; true; else echo "Signature verification FAILED"; false; fi'
+
+# finish_boot: Complete the boot sequence after verification passed
+# Uses bootm sub-commands to continue from where bootm start left off
+FB: ucmd setenv finish_boot 'echo "Completing boot sequence..."; bootm loados; bootm ramdisk; bootm prep; bootm go'
+
+# try_primary: Load primary, verify, if OK run prog_en_test and boot
+FB: ucmd setenv try_primary 'if run load_primary; then if run verify_image; then echo "Primary image OK - running prog_en_test..."; run prog_en_test; run finish_boot; else echo "Primary image FAILED verification"; false; fi; else echo "Primary image load failed"; false; fi'
+
+# try_backup: Load backup, verify, if OK run prog_en_test and boot
+FB: ucmd setenv try_backup 'if run load_backup; then if run verify_image; then echo "Backup image OK - running prog_en_test..."; run prog_en_test; run finish_boot; else echo "Backup image FAILED verification"; false; fi; else echo "Backup image load failed"; false; fi'
+
+# bootcmd: Main boot command
+# Sequence:
+# 1. Probe SPI flash at full speed
+# 2. Try primary image (get size -> load -> verify -> prog_en_test -> boot)
+# 3. If primary fails, try backup (if available)
+# 4. If both fail, show error
+FB: ucmd setenv bootcmd 'echo "=== Secure Boot with FIT Image ==="; echo "Configuration: ${fit_config}"; echo "Backup available: ${dual_image_mode}"; echo ">>> Trying PRIMARY image..."; if run try_primary; then true; else if test ${dual_image_mode} = 1; then echo ">>> Trying BACKUP image..."; if run try_backup; then true; else false; fi; else echo "!!! NO BACKUP image available !!!"; fi; fi; echo "CRITICAL ERROR: Boot failed!"'
+
+#Decoder is lan driver, not init in u-boot, so we set mac in user space.
+#FB[-t 100000]: ucmd if test $armid = 3;then setenv ethaddr 00:16:50:BA:DE:03; echo "Decoder Mac: 00:16:50:BA:DE:03"; else echo "Not Decoder";fi
+FB[-t 100000]: ucmd if test $armid = 2;then setenv ethaddr 00:16:50:BA:DE:02; echo "Base ARM#2 Mac: 00:16:50:BA:DE:02"; setenv ipaddr 10.0.1.5;echo "Ip:10.0.1.5"; else echo "Not Base Arm#2";fi
+FB[-t 100000]: ucmd if test $armid = 1;then setenv ethaddr 00:16:50:BA:DE:01; echo "Base ARM#1 Mac: 00:16:50:BA:DE:01"; else echo "Not Base Arm#1";fi
+
+#erase fitimage_size - it should be determined every load
+FB: ucmd setenv fitimage_size
 
 FB: ucmd saveenv
-#FB: ucmd saveenv
-#FB: ucmd printenv dtb_size
-#FB: ucmd printenv kernel_size
-#FB: ucmd printenv initramfs_size
 # Done
 FB: done

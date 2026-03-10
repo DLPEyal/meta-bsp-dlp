@@ -1,0 +1,202 @@
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Sun, 26 Jan 2026 12:00:00 +0200
+Subject: [PATCH] disable PCIe on ARM1-3
+
+Resolution: Disable PCIe on ARM1-3 - no PCIe hardware present.
+
+---
+ arch/arm64/boot/dts/freescale/basearm1.dts | 50 +++++-----------------
+ arch/arm64/boot/dts/freescale/basearm2.dts | 45 ++++---------------
+ arch/arm64/boot/dts/freescale/decoder.dts  | 55 +++++-----------------
+ 3 files changed, 25 insertions(+), 125 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/basearm1.dts b/arch/arm64/boot/dts/freescale/basearm1.dts
+--- a/arch/arm64/boot/dts/freescale/basearm1.dts
++++ b/arch/arm64/boot/dts/freescale/basearm1.dts
+@@ -601,52 +601,15 @@
+ };
+ 
+ &pcie{
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pcie>;
+-	disable-gpio = <&gpio2 6 GPIO_ACTIVE_LOW>;
+-	reset-gpio = <&gpio2 7 GPIO_ACTIVE_LOW>;
+-	ext_osc = <1>;
+-	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+-		 <&clk IMX8MP_CLK_PCIE_AUX>,
+-		 <&clk IMX8MP_CLK_HSIO_AXI>,
+-		 <&clk IMX8MP_CLK_PCIE_ROOT>;
+-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+-	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+-			  <&clk IMX8MP_CLK_PCIE_AUX>;
+-	assigned-clock-rates = <500000000>, <10000000>;
+-	assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>,
+-				 <&clk IMX8MP_SYS_PLL2_50M>;
+-	l1ss-disabled;
+-	status = "okay";
+-
+-	wifi_wake_host {
+-		compatible = "nxp,wifi-wake-host";
+-		interrupt-parent = <&gpio5>;
+-		interrupts = <21 IRQ_TYPE_LEVEL_LOW>;
+-		interrupt-names = "host-wake";
+-	};
++	status = "disabled";
+ };
+ 
+ &pcie_ep{
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pcie>;
+-	ext_osc = <1>;
+-	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+-		 <&clk IMX8MP_CLK_PCIE_AUX>,
+-		 <&clk IMX8MP_CLK_HSIO_AXI>,
+-		 <&clk IMX8MP_CLK_PCIE_ROOT>;
+-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+-	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+-			  <&clk IMX8MP_CLK_PCIE_AUX>;
+-	assigned-clock-rates = <500000000>, <10000000>;
+-	assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>,
+-				 <&clk IMX8MP_SYS_PLL2_50M>;
+ 	status = "disabled";
+ };
+ 
+ &pcie_phy{
+-	ext_osc = <1>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &sai2 {
+@@ -963,7 +926,7 @@
+ 
+ 	pinctrl_pcie: pciegrp {
+ 		fsl,pins = <
+-			
++		/* No PCIe - pins not configured */
+ 		>;
+ 	};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/basearm2.dts b/arch/arm64/boot/dts/freescale/basearm2.dts
+--- a/arch/arm64/boot/dts/freescale/basearm2.dts
++++ b/arch/arm64/boot/dts/freescale/basearm2.dts
+@@ -482,47 +482,14 @@
+ };
+ 
+ &pcie{
+-	disable-gpio = <&gpio2 6 GPIO_ACTIVE_LOW>;
+-	reset-gpio = <&gpio2 7 GPIO_ACTIVE_LOW>;
+-	ext_osc = <1>;
+-	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+-		 <&clk IMX8MP_CLK_PCIE_AUX>,
+-		 <&clk IMX8MP_CLK_HSIO_AXI>,
+-		 <&clk IMX8MP_CLK_PCIE_ROOT>;
+-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+-	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+-			  <&clk IMX8MP_CLK_PCIE_AUX>;
+-	assigned-clock-rates = <500000000>, <10000000>;
+-	assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>,
+-				 <&clk IMX8MP_SYS_PLL2_50M>;
+-	l1ss-disabled;
+-	status = "disabled";
+-
+-	wifi_wake_host {
+-		compatible = "nxp,wifi-wake-host";
+-		interrupt-parent = <&gpio5>;
+-		interrupts = <21 IRQ_TYPE_LEVEL_LOW>;
+-		interrupt-names = "host-wake";
+-	};
++	status = "disabled";
+ };
+ 
+ &pcie_ep{
+-	ext_osc = <1>;
+-	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+-		 <&clk IMX8MP_CLK_PCIE_AUX>,
+-		 <&clk IMX8MP_CLK_HSIO_AXI>,
+-		 <&clk IMX8MP_CLK_PCIE_ROOT>;
+-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+-	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+-			  <&clk IMX8MP_CLK_PCIE_AUX>;
+-	assigned-clock-rates = <500000000>, <10000000>;
+-	assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>,
+-				 <&clk IMX8MP_SYS_PLL2_50M>;
+ 	status = "disabled";
+ };
+ 
+ &pcie_phy{
+-	ext_osc = <1>;
+ 	status = "disabled";
+ };
+ 
+diff --git a/arch/arm64/boot/dts/freescale/decoder.dts b/arch/arm64/boot/dts/freescale/decoder.dts
+--- a/arch/arm64/boot/dts/freescale/decoder.dts
++++ b/arch/arm64/boot/dts/freescale/decoder.dts
+@@ -598,52 +598,15 @@
+ };
+ 
+ &pcie{
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pcie>;
+-	disable-gpio = <&gpio2 6 GPIO_ACTIVE_LOW>;
+-	reset-gpio = <&gpio2 7 GPIO_ACTIVE_LOW>;
+-	ext_osc = <1>;
+-	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+-		 <&clk IMX8MP_CLK_PCIE_AUX>,
+-		 <&clk IMX8MP_CLK_HSIO_AXI>,
+-		 <&clk IMX8MP_CLK_PCIE_ROOT>;
+-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+-	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+-			  <&clk IMX8MP_CLK_PCIE_AUX>;
+-	assigned-clock-rates = <500000000>, <10000000>;
+-	assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>,
+-				 <&clk IMX8MP_SYS_PLL2_50M>;
+-	l1ss-disabled;
+-	status = "okay";
+-
+-	wifi_wake_host {
+-		compatible = "nxp,wifi-wake-host";
+-		interrupt-parent = <&gpio5>;
+-		interrupts = <21 IRQ_TYPE_LEVEL_LOW>;
+-		interrupt-names = "host-wake";
+-	};
++	status = "disabled";
+ };
+ 
+ &pcie_ep{
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pcie>;
+-	ext_osc = <1>;
+-	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+-		 <&clk IMX8MP_CLK_PCIE_AUX>,
+-		 <&clk IMX8MP_CLK_HSIO_AXI>,
+-		 <&clk IMX8MP_CLK_PCIE_ROOT>;
+-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+-	assigned-clocks = <&clk IMX8MP_CLK_HSIO_AXI>,
+-			  <&clk IMX8MP_CLK_PCIE_AUX>;
+-	assigned-clock-rates = <500000000>, <10000000>;
+-	assigned-clock-parents = <&clk IMX8MP_SYS_PLL2_500M>,
+-				 <&clk IMX8MP_SYS_PLL2_50M>;
+ 	status = "disabled";
+ };
+ 
+ &pcie_phy{
+-	ext_osc = <1>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &sai2 {
+@@ -1005,8 +968,7 @@
+ 
+ 	pinctrl_pcie: pciegrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_I2C4_SCL__PCIE_CLKREQ_B		0x60 /* open drain, pull up */
+-			MX8MP_IOMUXC_I2C4_SDA__GPIO5_IO21		0x1c4
++		/* No PCIe - pins not configured */
+ 		>;
+ 	};
+ 
+-- 
+2.39.5
+

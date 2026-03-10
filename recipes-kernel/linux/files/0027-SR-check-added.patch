@@ -1,0 +1,40 @@
+From 861167889871f8397966cc1bde47ab80f3ea98b5 Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Sun, 16 Nov 2025 17:19:17 +0200
+Subject: [PATCH] SR check added
+
+---
+ drivers/mtd/spi-nor/core.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/drivers/mtd/spi-nor/core.c b/drivers/mtd/spi-nor/core.c
+index eb5d7b3d1860..8a35271b8022 100644
+--- a/drivers/mtd/spi-nor/core.c
++++ b/drivers/mtd/spi-nor/core.c
+@@ -316,6 +316,26 @@ ssize_t spi_nor_write_data(struct spi_nor *nor, loff_t to, size_t len,
+ int spi_nor_write_enable(struct spi_nor *nor)
+ {
+ 	int ret;
++	u8 sr[2] = { 0, 0 };
++	const u8 bp_mask = GENMASK(5, 2); /* BP3..BP0 -> bits 5..2 */
++	static bool bp_warned;
++
++	ret = spi_nor_read_sr(nor, sr);
++	if (ret) {
++		dev_warn(nor->dev, "Failed to read SR (err=%d)\n", ret);
++		return ret;
++	}
++
++	/* sr[0] holds the primary status byte; spi_nor_read_sr() may fill sr[1] too. */
++	if (sr[0] & bp_mask) {
++		if (!bp_warned) {
++			dev_warn(nor->dev,
++				 "Write Enable blocked: BP bits set (SR=0x%02x)\n",
++				 sr[0]);
++			bp_warned = true;
++		}
++		return -EACCES;
++	}
+ 
+ 	if (nor->spimem) {
+ 		struct spi_mem_op op =
