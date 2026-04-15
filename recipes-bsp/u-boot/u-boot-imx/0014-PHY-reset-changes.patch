@@ -1,0 +1,83 @@
+From 9fbfdfd742958ab87876a8285cac089d6bf958eb Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Wed, 25 Mar 2026 12:12:30 +0200
+Subject: [PATCH] PHY reset changes
+
+---
+ arch/arm/dts/imx8mp-evk.dts      |  4 ++--
+ board/freescale/imx8mp_evk/spl.c | 15 +++++++++------
+ 2 files changed, 11 insertions(+), 8 deletions(-)
+
+diff --git a/arch/arm/dts/imx8mp-evk.dts b/arch/arm/dts/imx8mp-evk.dts
+index 7700443c790..84f5d9af297 100644
+--- a/arch/arm/dts/imx8mp-evk.dts
++++ b/arch/arm/dts/imx8mp-evk.dts
+@@ -538,8 +538,8 @@
+ 		        MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04        0x00000106
+-		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000146
+-		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000166
++		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000166
+ 		        MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09        0x00000106
+diff --git a/board/freescale/imx8mp_evk/spl.c b/board/freescale/imx8mp_evk/spl.c
+index cfdc142b89e..81ab40d54d0 100644
+--- a/board/freescale/imx8mp_evk/spl.c
++++ b/board/freescale/imx8mp_evk/spl.c
+@@ -71,6 +71,7 @@ void spl_dram_init(void)
+ }
+ 
+ #define GPIO_PAD_CTRL (MUX_PAD_CTRL(0x10)) // Basic pad control - adjust if needed
++#define PHY_RST_PAD_CTRL (MUX_PAD_CTRL(0x166)) // Basic pad control - adjust if needed
+ 
+ static int read_boot_gpios(void)
+ {
+@@ -125,9 +126,9 @@ static int reset_phy_88e1512_arm2(void)
+ 	int phyreset = 0;
+ 
+ 	// Configure pads as GPIOs
+-	imx_iomux_v3_setup_pad(MX8MP_PAD_GPIO1_IO05__GPIO1_IO05 | GPIO_PAD_CTRL); 
++	imx_iomux_v3_setup_pad(MX8MP_PAD_GPIO1_IO05__GPIO1_IO05 | PHY_RST_PAD_CTRL); 
+ 
+-	// Initialize GPIO44
++	// Initialize GPIO5
+ 	ret = gpio_request(IMX_GPIO_NR(1, 5), "gpio5");
+ 	if (ret) {
+ 		printf("gpio_request failed for GPIO5: %d\n", ret);
+@@ -138,8 +139,9 @@ static int reset_phy_88e1512_arm2(void)
+ 		printf("gpio_direction_input failed for GPIO5: %d\n", ret);
+ 		return ret;
+ 	}
++	gpio_set_value(IMX_GPIO_NR(1, 5),0x0);
++	udelay(10000);
+ 	phyreset = gpio_set_value(IMX_GPIO_NR(1, 5),0x1);
+-
+ 	return phyreset;
+ }
+ 
+@@ -149,9 +151,9 @@ static int reset_phy_88e1512_arm1(void)
+ 	int phyreset = 0;
+ 
+ 	// Configure pads as GPIOs
+-	imx_iomux_v3_setup_pad(MX8MP_PAD_GPIO1_IO06__GPIO1_IO06 | GPIO_PAD_CTRL); 
++	imx_iomux_v3_setup_pad(MX8MP_PAD_GPIO1_IO06__GPIO1_IO06 | PHY_RST_PAD_CTRL); 
+ 
+-	// Initialize GPIO44
++	// Initialize GPIO6
+ 	ret = gpio_request(IMX_GPIO_NR(1, 6), "gpio6");
+ 	if (ret) {
+ 		printf("gpio_request failed for GPIO6: %d\n", ret);
+@@ -162,8 +164,9 @@ static int reset_phy_88e1512_arm1(void)
+ 		printf("gpio_direction_input failed for GPIO6: %d\n", ret);
+ 		return ret;
+ 	}
++	gpio_set_value(IMX_GPIO_NR(1, 6),0x0);
++	udelay(10000);
+ 	phyreset = gpio_set_value(IMX_GPIO_NR(1, 6),0x1);
+-	 sdelay(7500);
+ 	return phyreset;
+ }
+ 

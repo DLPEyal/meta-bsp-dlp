@@ -1,0 +1,85 @@
+From 91e5ae965c2fee59c3cc3da139afc196b2409bcd Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Wed, 25 Mar 2026 12:13:34 +0200
+Subject: [PATCH] PHY reset changes, removed eeprom
+
+---
+ arch/arm64/boot/dts/freescale/basearm1.dts | 21 +++++----------------
+ arch/arm64/boot/dts/freescale/basearm2.dts |  4 ++--
+ 2 files changed, 7 insertions(+), 18 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/basearm1.dts b/arch/arm64/boot/dts/freescale/basearm1.dts
+index 026b8ea64146..1c8f9565a1ea 100755
+--- a/arch/arm64/boot/dts/freescale/basearm1.dts
++++ b/arch/arm64/boot/dts/freescale/basearm1.dts
+@@ -238,12 +238,7 @@ &i2c1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c1>;
+ 	status = "okay";
+-	 at24@50 { /* EEPROM at 0xa2 (A0, A1, A2 = 0) */
+-		compatible = "atmel,24c02";
+-		reg = <0xa2>;
+-		pagesize = <8>;
+-		size = <256>; /* 2Kb = 256 Bytes */
+-	    };
++
+ 	pmic@25 {
+ 		compatible = "nxp,pca9450c";
+ 		reg = <0x25>;
+@@ -406,13 +401,8 @@ &i2c4 {
+ 	clock-frequency = <400000>;
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c4>;
+-	status = "okay";
+-	 at24@51 { /* EEPROM at 0x51 (A0, A1, A2 = 0) */
+-		compatible = "atmel,24c02";
+-		reg = <0x51>;
+-		pagesize = <8>;
+-		size = <256>; /* 2Kb = 256 Bytes */
+-	    };
++	status = "disabled";
++
+ };
+ 
+ &irqsteer_hdmi {
+@@ -619,7 +609,7 @@ MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04        0x00000106
+-		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000106
++		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000166
+ 		        MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09        0x00000106
+@@ -746,8 +736,7 @@ MX8MP_IOMUXC_I2C3_SDA__I2C3_SDA		0x400001c2
+ 	
+ 	pinctrl_i2c4: i2c4grp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_I2C4_SCL__I2C4_SCL            0x400001c2
+-			MX8MP_IOMUXC_I2C4_SDA__I2C4_SDA            0x400001c2
++
+ 		>;
+ 	};
+ 
+diff --git a/arch/arm64/boot/dts/freescale/basearm2.dts b/arch/arm64/boot/dts/freescale/basearm2.dts
+index 0916f83c29a5..a8c846fb6843 100755
+--- a/arch/arm64/boot/dts/freescale/basearm2.dts
++++ b/arch/arm64/boot/dts/freescale/basearm2.dts
+@@ -386,7 +386,7 @@ &i2c4 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c4>;
+ 	status = "okay";
+-	 at24@51 { /* EEPROM at 0x51 (A0, A1, A2 = 0) */
++	at24@51 { /* EEPROM at 0x51 (A0, A1, A2 = 0) */
+ 		compatible = "atmel,24c02";
+ 		reg = <0x51>;
+ 		pagesize = <8>;
+@@ -554,7 +554,7 @@ pinctrl_hog: hoggrp {
+                 	MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03        0x00000106
+-		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000146
++		        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05        0x00000166
+ 		        MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07        0x00000106
+ 		        MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08        0x00000106

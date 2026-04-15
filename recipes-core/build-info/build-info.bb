@@ -6,7 +6,7 @@ inherit allarch
 
 do_install() {
     install -d ${D}${sysconfdir}
-    echo "VERSION=2.5" > ${D}${sysconfdir}/build-info
+    echo "VERSION=2.6.0" > ${D}${sysconfdir}/build-info
 
 }
 

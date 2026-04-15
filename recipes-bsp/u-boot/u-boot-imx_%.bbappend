@@ -12,6 +12,7 @@ SRC_URI += "file://0001-update-read-status-register.patch \
             file://0010-Adding-second-MTP.patch \
             file://0011-SF-changes-for-protect.patch \
             file://0012-optee-reserve-memory.patch \
+            file://0014-PHY-reset-changes.patch \
             "
 
 # Conditional secure boot mandatory signature verification
