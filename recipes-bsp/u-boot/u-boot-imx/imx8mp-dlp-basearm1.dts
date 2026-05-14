@@ -1,0 +1,107 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+// DLP Base ARM#1 U-Boot device tree
+// UART2 on UART2 pads (DCE), PHY reset on GPIO1_IO06, PMIC IRQ on GPIO1_IO05
+
+// FlexSPI: boot flash on Bus A CS0, dual MTP NOR on Bus B CS0/CS1 (from EVK base)
+
+/dts-v1/;
+
+#include "imx8mp-evk.dts"
+#include "imx8mp-dlp.dtsi"
+
+/ {
+	model = "DLP Base ARM1 i.MX8MP";
+	compatible = "dlp,basearm1", "fsl,imx8mp";
+};
+
+&eqos {
+	/delete-property/ phy-handle;
+	phy-mode = "rgmii";
+	status = "okay";
+
+	/delete-node/ mdio;
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+&fec {
+	phy-mode = "rgmii-id";
+	phy-reset-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
+	phy-reset-duration = <15>;
+	phy-reset-post-delay = <100>;
+
+	mdio {
+		ethphy1: ethernet-phy@0 {
+			device_type = "ethernet-phy";
+			compatible = "marvell,88e1510";
+			reg = <0x0>;
+			marvell,reg-init = <3 0x10 0 0x880>;
+			reset-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
+			reset-assert-us = <10000>;
+			reset-deassert-us = <80000>;
+		};
+	};
+};
+
+&uart2 {
+	/delete-property/ fsl,dte-mode;
+};
+
+&pmic {
+	interrupt-parent = <&gpio1>;
+	interrupts = <5 IRQ_TYPE_LEVEL_LOW>;
+};
+
+&iomuxc {
+	pinctrl_hog: hoggrp {
+		fsl,pins = <
+			/* Board ID inputs */
+			MX8MP_IOMUXC_SD2_CD_B__GPIO2_IO12	0x00000106
+			MX8MP_IOMUXC_SD2_DATA1__GPIO2_IO16	0x00000106
+
+			/* PHY reset - strong driver for safe high default */
+			MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06	0x00000166
+
+			/* LEDs - output low */
+			MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01	0x00000106
+
+			MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x00000106
+
+			/* Generic GPIO */
+			MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04	0x00000106
+
+			/* Misc GPIO1 - safe input default */
+			MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO10__GPIO1_IO10	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO11__GPIO1_IO11	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO12__GPIO1_IO12	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO13__GPIO1_IO13	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO14__GPIO1_IO14	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO15__GPIO1_IO15	0x00000106
+
+			/* GPIO2 - SD2 group */
+			MX8MP_IOMUXC_SD2_DATA3__GPIO2_IO18	0x00000106
+			MX8MP_IOMUXC_SD2_RESET_B__GPIO2_IO19	0x00000106
+			MX8MP_IOMUXC_SD2_WP__GPIO2_IO20	0x00000106
+		>;
+	};
+
+	pinctrl_uart2: uart2grp {
+		fsl,pins = <
+			MX8MP_IOMUXC_UART2_RXD__UART2_DCE_RX	0x140
+			MX8MP_IOMUXC_UART2_TXD__UART2_DCE_TX	0x140
+		>;
+	};
+
+	pinctrl_pmic: pmicirq {
+		fsl,pins = <
+			MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05	0x00000146
+		>;
+	};
+};

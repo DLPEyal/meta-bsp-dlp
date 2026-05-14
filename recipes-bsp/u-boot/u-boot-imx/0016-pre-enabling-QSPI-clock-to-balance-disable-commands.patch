@@ -1,0 +1,62 @@
+From 7620fa2b515efa986b3eb20503a8d832332e5ac4 Mon Sep 17 00:00:00 2001
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Wed, 29 Apr 2026 12:27:54 +0300
+Subject: [PATCH] pre-enabling QSPI clock to balance disable commands
+
+Disabling qspi clock on .probe when they are disabled allready causes
+error messages on u-boot start. Pre-enabling qspi clock with this patch
+restores an enable/disable ballance.
+
+---
+ drivers/spi/nxp_fspi.c | 35 ++++++++++++++++++++++++++++-------
+ 1 file changed, 28 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/spi/nxp_fspi.c b/drivers/spi/nxp_fspi.c
+index 2cab06bdd88..622bb248e11 100644
+--- a/drivers/spi/nxp_fspi.c
++++ b/drivers/spi/nxp_fspi.c
+@@ -1072,13 +1072,34 @@ static int nxp_fspi_default_setup(struct nxp_fspi *f)
+ 
+ static int nxp_fspi_probe(struct udevice *bus)
+ {
+-	struct nxp_fspi *f = dev_get_priv(bus);
+-
+-	f->devtype_data =
+-		(struct nxp_fspi_devtype_data *)dev_get_driver_data(bus);
+-	nxp_fspi_default_setup(f);
+-
+-	return 0;
++    struct nxp_fspi *f = dev_get_priv(bus);
++    int ret;
++
++    f->devtype_data =
++            (struct nxp_fspi_devtype_data *)dev_get_driver_data(bus);
++
++    /*
++     * Pre-enable the FlexSPI clocks so the disable/configure/enable
++     * cycle inside nxp_fspi_default_setup() stays balanced. Without
++     * this, the leading clk_disable_unprep() in default_setup() runs
++     * with enable_count == 0 on qspi_root_clk and prints
++     * "clk qspi_root_clk already disabled" twice (both fspi_en and
++     * fspi resolve to the same gate on i.MX8MP). Mirrors the order
++     * used by the upstream Linux nxp-fspi probe.
++     */
++    ret = nxp_fspi_clk_prep_enable(f);
++    if (ret) {
++        dev_err(bus, "cannot enable FlexSPI clocks: %d\n", ret);
++        return ret;
++    }
++
++    ret = nxp_fspi_default_setup(f);
++    if (ret) {
++        nxp_fspi_clk_disable_unprep(f);
++        return ret;
++    }
++
++    return 0;
+ }
+ 
+ static int nxp_fspi_claim_bus(struct udevice *dev)
+-- 
+2.39.5
+

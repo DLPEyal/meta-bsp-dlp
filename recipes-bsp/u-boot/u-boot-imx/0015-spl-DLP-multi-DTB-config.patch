@@ -1,0 +1,116 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Eyal Novitsky <eyal.novitsky@eyal-emi.co.il>
+Date: Sun, 26 Apr 2026 19:15:00 +0300
+Subject: [PATCH] spl: DLP multi-DTB via MMIO board ID and FIT descriptions
+
+Read board ID GPIOs via GPIO2 MMIO (no gpio_request) so repeated SPL/FIT
+paths do not hit -EBUSY. Cache the decoded ID only after a successful read.
+
+Match FIT configuration descriptions produced by mkimage_fit_atf.sh
+(basename of each DTB, e.g. imx8mp-dlp-basearm1), not config-N node names.
+
+---
+ board/freescale/imx8mp_evk/spl.c | 73 +++++++++++++++++++++++++++-----------------------------
+ 1 file changed, 36 insertions(+), 37 deletions(-)
+
+diff --git a/board/freescale/imx8mp_evk/spl.c b/board/freescale/imx8mp_evk/spl.c
+--- a/board/freescale/imx8mp_evk/spl.c
++++ b/board/freescale/imx8mp_evk/spl.c
+@@ -73,50 +73,41 @@
+ #define GPIO_PAD_CTRL (MUX_PAD_CTRL(0x10)) // Basic pad control - adjust if needed
+ #define PHY_RST_PAD_CTRL (MUX_PAD_CTRL(0x166)) // Basic pad control - adjust if needed
+ 
++#define DLP_GPIO2_MMIO_BASE	0x30210000UL
++
++/* Board ID on GPIO2 IO12/16: MMIO read (no gpio_request); */
++static int dlp_read_gpio2_pin(unsigned int pin)
++{
++	struct gpio_regs *regs = (struct gpio_regs *)DLP_GPIO2_MMIO_BASE;
++	u32 mask = 1U << pin;
++	u32 dir;
++
++	dir = readl(&regs->gpio_dir);
++	dir &= ~mask;
++	writel(dir, &regs->gpio_dir);
++	udelay(5);
++	return !!(readl(&regs->gpio_psr) & mask);
++}
++
+ static int read_boot_gpios(void)
+ {
+-	int ret;
+-	int id_0 = -1, id_1 = -1, id = 0;
++	static int arm_id_cached = -1;
++	int id_0, id_1, id;
+ 
+-	// Configure pads as GPIOs
++	if (arm_id_cached >= 0)
++		return arm_id_cached;
++
++	/* Configure pads as GPIO */
+ 	imx_iomux_v3_setup_pad(MX8MP_PAD_SD2_CD_B__GPIO2_IO12 | GPIO_PAD_CTRL);    // GPIO44 (GPIO2_IO12)
+ 	imx_iomux_v3_setup_pad(MX8MP_PAD_SD2_DATA1__GPIO2_IO16 | GPIO_PAD_CTRL);   // GPIO48 (GPIO2_IO16)
+ 
+-	// Initialize GPIO44
+-	ret = gpio_request(IMX_GPIO_NR(2, 12), "gpio44");
+-	if (ret) {
+-		printf("gpio_request failed for GPIO44: %d\n", ret);
+-		return ret;
+-	}
+-	ret = gpio_direction_input(IMX_GPIO_NR(2, 12));
+-	if (ret) {
+-		printf("gpio_direction_input failed for GPIO44: %d\n", ret);
+-		return ret;
+-	}
+-	id_1 = gpio_get_value(IMX_GPIO_NR(2, 12));
+-
+-	// Initialize GPIO48
+-	ret = gpio_request(IMX_GPIO_NR(2, 16), "gpio48");
+-	if (ret) {
+-		printf("gpio_request failed for GPIO48: %d\n", ret);
+-		return ret;
+-	}
+-	ret = gpio_direction_input(IMX_GPIO_NR(2, 16));
+-	if (ret) {
+-		printf("gpio_direction_input failed for GPIO48: %d\n", ret);
+-		return ret;
+-	}
+-	id_0 = gpio_get_value(IMX_GPIO_NR(2, 16));
+-
+-	// Combine the ID bits
+-	if (id_0 < 0 || id_1 < 0) {
+-		printf("Failed to read GPIO values: id_0=%d, id_1=%d\n", id_0, id_1);
+-		return -EINVAL;
+-	}
++	id_1 = dlp_read_gpio2_pin(12);
++	id_0 = dlp_read_gpio2_pin(16);
+ 
+ 	id = (id_0 << 1) | id_1;
+ 	printf("GPIO Read Success: id_0=%d, id_1=%d, id=%d\n", id_0, id_1, id);
+ 
++	arm_id_cached = id;
+ 	return id;
+ }
+ 
+@@ -252,10 +243,18 @@
+ #ifdef CONFIG_SPL_LOAD_FIT
+ int board_fit_config_name_match(const char *name)
+ {
+-	/* Just empty function now - can't decide what to choose */
+-	debug("%s: %s\n", __func__, name);
++	/* name is FIT configuration "description" (see u-boot.its), not node name */
++	int armID = read_boot_gpios();
+ 
+-	return 0;
++	debug("%s: %s armID=%d\n", __func__, name, armID);
++	if (armID == 1 && !strcmp(name, "imx8mp-dlp-basearm1"))
++		return 0;
++	if (armID == 2 && !strcmp(name, "imx8mp-dlp-basearm2"))
++		return 0;
++	if (armID == 3 && !strcmp(name, "imx8mp-dlp-decoder"))
++		return 0;
++
++	return -1;
+ }
+ #endif
+ 

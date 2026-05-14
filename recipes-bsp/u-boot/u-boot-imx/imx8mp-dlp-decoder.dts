@@ -1,0 +1,117 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+// DLP Decoder (ARM#3) U-Boot device tree
+// UART2 on SAI3 pads (DTE mode), PMIC IRQ on GPIO1_IO03
+// FlexSPI Bus A, single NOR (MTP)
+// Both EQOS and FEC use fixed-link (no PHY)
+
+/dts-v1/;
+
+#include "imx8mp-evk.dts"
+#include "imx8mp-dlp.dtsi"
+
+/ {
+	model = "DLP Decoder i.MX8MP";
+	compatible = "dlp,decoder", "fsl,imx8mp";
+};
+
+&eqos {
+	/delete-property/ phy-handle;
+	status = "okay";
+
+	/delete-node/ mdio;
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+&fec {
+	/delete-property/ phy-handle;
+	phy-mode = "rgmii-id";
+
+	/delete-node/ mdio;
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+	};
+};
+
+/*
+&flexspi {
+	/delete-node/ mt25qu02gaba@2;
+	/delete-node/ mt25qu02gaba@3;
+};
+*/
+
+&pmic {
+	interrupt-parent = <&gpio1>;
+	interrupts = <3 IRQ_TYPE_LEVEL_LOW>;
+};
+
+&iomuxc {
+	pinctrl_hog: hoggrp {
+		fsl,pins = <
+			/* LEDs - output low */
+			MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO01__GPIO1_IO01	0x00000106
+
+			/* Misc GPIO1 - safe input default */
+			MX8MP_IOMUXC_GPIO1_IO04__GPIO1_IO04	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05	0x00000146
+			MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO10__GPIO1_IO10	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO11__GPIO1_IO11	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO12__GPIO1_IO12	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO13__GPIO1_IO13	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO14__GPIO1_IO14	0x00000106
+			MX8MP_IOMUXC_GPIO1_IO15__GPIO1_IO15	0x00000106
+
+			/* GPIO2 - SD1 group (unused SD1, kept as GPIO input for safe default) */
+			MX8MP_IOMUXC_SD1_CLK__GPIO2_IO00	0x00000106
+			MX8MP_IOMUXC_SD1_CMD__GPIO2_IO01	0x00000106
+			MX8MP_IOMUXC_SD1_DATA0__GPIO2_IO02	0x00000106
+			MX8MP_IOMUXC_SD1_DATA1__GPIO2_IO03	0x00000106
+			MX8MP_IOMUXC_SD1_DATA2__GPIO2_IO04	0x00000106
+			MX8MP_IOMUXC_SD1_DATA3__GPIO2_IO05	0x00000106
+			MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07	0x00000106
+			MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08	0x00000106
+			/* M.2 88W9098: pin20/21 at 1/1 selects default refclk -> strong pull */
+			MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09	0x000001c4
+			MX8MP_IOMUXC_SD1_RESET_B__GPIO2_IO10	0x00000010
+			MX8MP_IOMUXC_SD1_STROBE__GPIO2_IO11	0x00000010
+
+			/* GPIO2 - SD2 group */
+			MX8MP_IOMUXC_SD2_CLK__GPIO2_IO13	0x00000106
+			MX8MP_IOMUXC_SD2_CMD__GPIO2_IO14	0x00000106
+			MX8MP_IOMUXC_SD2_DATA0__GPIO2_IO15	0x00000046
+			MX8MP_IOMUXC_SD2_DATA1__GPIO2_IO16	0x00000106
+			MX8MP_IOMUXC_SD2_DATA2__GPIO2_IO17	0x00000106
+			MX8MP_IOMUXC_SD2_DATA3__GPIO2_IO18	0x00000106
+			MX8MP_IOMUXC_SD2_RESET_B__GPIO2_IO19	0x00000106
+			MX8MP_IOMUXC_SD2_WP__GPIO2_IO20	0x00000106
+		>;
+	};
+
+/*
+	pinctrl_flexspi0: flexspi0grp {
+		fsl,pins = <
+			MX8MP_IOMUXC_NAND_ALE__FLEXSPI_A_SCLK		0x1c2
+			MX8MP_IOMUXC_NAND_CE0_B__FLEXSPI_A_SS0_B	0x82
+			MX8MP_IOMUXC_NAND_DATA00__FLEXSPI_A_DATA00	0x82
+			MX8MP_IOMUXC_NAND_DATA01__FLEXSPI_A_DATA01	0x82
+			MX8MP_IOMUXC_NAND_DATA02__FLEXSPI_A_DATA02	0x82
+			MX8MP_IOMUXC_NAND_DATA03__FLEXSPI_A_DATA03	0x82
+		>;
+	};
+*/
+	pinctrl_pmic: pmicirq {
+		fsl,pins = <
+			MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x00000146
+		>;
+	};
+};

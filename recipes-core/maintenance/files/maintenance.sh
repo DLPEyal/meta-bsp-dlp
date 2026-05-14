@@ -20,8 +20,30 @@ MODE=`echo "$LINE" | cut -d',' -f2`
 # Print the extracted values
 echo "Found ID=$ID, MODE=$MODE"
 
+# Check if MODE is Decoder stand alone
+
+if [ "$ID" -eq 3 ] && [ "$MODE" = "d" ]; then
+echo "Decoder Stand alone - Waiting for Eth"
+IPS="10.0.1.6"
+
+echo "Waiting for network availability..."
+
+while true; do
+    for IP in $IPS; do
+        if ping -c 1 -W 1 $IP > /dev/null 2>&1; then
+            echo "Active IP found: $IP"
+            echo "Run Maintenance Process"
+            maintenance
+            exit 0
+        fi
+    done
+    sleep 1  # Wait 1 seconds before checking again
+done
+
+
+
 # Check if ID equals 2
-if [ "$ID" -eq 2 ]; then
+elif [ "$ID" -eq 2 ]; then
     echo "ID is 2 - Waiting for Eth"
 
 # IPs to check

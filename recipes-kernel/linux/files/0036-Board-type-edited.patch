@@ -1,0 +1,70 @@
+From b2433aeb6e6aca72577a1ebb3b1f44b9c98efe0e Mon Sep 17 00:00:00 2001
+From: Oleg Strelecky <oleg_s@eyal-emi.co.il>
+Date: Wed, 6 May 2026 11:56:24 +0300
+Subject: [PATCH] Board type edited
+
+---
+ arch/arm64/boot/dts/freescale/basearm1.dts | 2 +-
+ arch/arm64/boot/dts/freescale/basearm2.dts | 2 +-
+ arch/arm64/boot/dts/freescale/decoder.dts  | 2 +-
+ oe-logs                                    | 2 +-
+ oe-workdir                                 | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/freescale/basearm1.dts b/arch/arm64/boot/dts/freescale/basearm1.dts
+index 1c8f9565a1ea..9bcbf0c06540 100755
+--- a/arch/arm64/boot/dts/freescale/basearm1.dts
++++ b/arch/arm64/boot/dts/freescale/basearm1.dts
+@@ -11,7 +11,7 @@
+ #include "usb_whitelist.h"
+ 
+ / {
+-	model = "NXP i.MX8MPlus EVK board";
++	model = "DLP Base board";
+ 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
+ 
+ 	chosen {
+diff --git a/arch/arm64/boot/dts/freescale/basearm2.dts b/arch/arm64/boot/dts/freescale/basearm2.dts
+index a8c846fb6843..30c82a8fddb6 100755
+--- a/arch/arm64/boot/dts/freescale/basearm2.dts
++++ b/arch/arm64/boot/dts/freescale/basearm2.dts
+@@ -11,7 +11,7 @@
+ #include "usb_whitelist.h"
+ 
+ / {
+-	model = "NXP i.MX8MPlus EVK board";
++	model = "DLP Base board";
+ 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
+ 
+ 	chosen {
+diff --git a/arch/arm64/boot/dts/freescale/decoder.dts b/arch/arm64/boot/dts/freescale/decoder.dts
+index 59f870fd2156..a7174911b248 100755
+--- a/arch/arm64/boot/dts/freescale/decoder.dts
++++ b/arch/arm64/boot/dts/freescale/decoder.dts
+@@ -11,7 +11,7 @@
+ #include "usb_whitelist.h"
+ 
+ / {
+-	model = "NXP i.MX8MPlus EVK board";
++	model = "DLP Decoder board";
+ 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
+ 
+ 	chosen {
+diff --git a/oe-logs b/oe-logs
+index e9929bbf6fd2..7bb6acfa9de1 120000
+--- a/oe-logs
++++ b/oe-logs
+@@ -1 +1 @@
+-/media/superuser/GlobalStorage/Projects/3043-50/users/oleg_s/dlp_next_update/build/tmp/work/dlp-poky-linux/linux-imx/5.15.71+git999-r0/temp
+\ No newline at end of file
++/mnt/data/Projects/3043-50/users/oleg_s/dlp_3uboot/build/tmp/work/dlp-poky-linux/linux-imx/5.15.71+git999-r0/temp
+\ No newline at end of file
+diff --git a/oe-workdir b/oe-workdir
+index 29006b7709d7..3fc36918e17b 120000
+--- a/oe-workdir
++++ b/oe-workdir
+@@ -1 +1 @@
+-/media/superuser/GlobalStorage/Projects/3043-50/users/oleg_s/dlp_next_update/build/tmp/work/dlp-poky-linux/linux-imx/5.15.71+git999-r0
+\ No newline at end of file
++/mnt/data/Projects/3043-50/users/oleg_s/dlp_3uboot/build/tmp/work/dlp-poky-linux/linux-imx/5.15.71+git999-r0
+\ No newline at end of file
