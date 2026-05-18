@@ -10,7 +10,6 @@ repo sync
 ```
 ## GitHUb fetch project
 ```
-
 repo init -u git@github.com:DLPEyal/dlp_yocto_manifest.git -b master -m dlp.xml
 
 repo sync
