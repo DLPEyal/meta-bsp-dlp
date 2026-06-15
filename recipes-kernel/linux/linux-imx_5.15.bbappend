@@ -36,6 +36,8 @@ SRC_URI += "file://0001-removed-promisc-check-on-eth1.patch \
      file://0034-clear-can-hdmi-sound-pwm-leftovers-from-ARM1-3-devic.patch \
      file://0035-PHY-reset-changes-removed-eeprom.patch \
      file://0036-Board-type-edited.patch \
+     file://0037-updated-arm1-gpio.patch \
+     file://0038-default-change-for-arm1-reboot-out-to-high.patch \
      file://kernel_config.cfg"
 
 #KERNEL_CONFIG_FRAGMENTS:append = " ${WORKDIR}/kernel_config.cfg"
